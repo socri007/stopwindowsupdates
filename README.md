@@ -1,4 +1,4 @@
-# Stop Automatic Windows Updates program
+# Stop Automatic Windows Updates Program
 
 # What is the Stop Automatic Windows Updates Program?
 Are You Suffering From Automatic Windows Updates That Consume Internet And Bother You?
