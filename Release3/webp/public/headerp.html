@@ -1,0 +1,1052 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+        <link href="build/css/css2.css" rel="stylesheet" />
+        <script src="build/js/tailwindcss.cdn.3.4.16.js"></script>
+        <link rel="stylesheet" href="build/css/tailwind.css" />
+        <!--Regular Datatables CSS-->
+
+        <style>
+            /*Overrides for Tailwind CSS */
+            /*Form fields*/
+
+            @font-face {
+                font-family: "mybigtitlefont";
+                src: url("../../fonts/NexaRustSlab-BlackShadow01.otf");
+            }
+            @font-face {
+                font-family: "mybigtitlefontDark";
+                src: url("../../fonts/Cairo-Black.ttf");
+            }
+            html {
+                font-family: cairo, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+                    "Noto Color Emoji";
+                /* 1 */
+                line-height: 1.5;
+                /* 2 */
+            }
+
+            .inner {
+                padding: 0px;
+            }
+            .inner .scanattemptsnumberUpper {
+                margin: -15px 0px 0 0;
+                font-size: 40px;
+                font-family: mybigtitlefont;
+                font-weight: bold;
+                white-space: nowrap;
+                padding: 0;
+                letter-spacing: 0.02em; /* مسافة مُعتمدة على حجم الخط */
+            }
+            .inner .scanattemptsnumberLower {
+                margin: -10px 0px 0px 0;
+                font-size: 40px;
+                font-family: mybigtitlefont;
+                font-weight: bold;
+                white-space: nowrap;
+                padding: 0;
+                letter-spacing: 0.02em; /* مسافة مُعتمدة على حجم الخط */
+            }
+            .inner .scanattemptsUpper {
+                margin: -12px 0 -9px 0;
+                font-size: 23px;
+                font-family: cairo;
+                font-weight: bold;
+                text-align: right;
+            }
+            .inner .scanattemptsLower {
+                margin: -87px 0 10px 0;
+                font-size: 22px;
+                font-family: cairo;
+                font-weight: bold;
+                text-align: right;
+            }
+
+            .table-responsive {
+                max-height: 305px; /* تحديد ارتفاع أقصى للعنصر الحاوي */
+                overflow-y: auto; /* إضافة تمرير عمودي عند تجاوز الارتفاع */
+                overflow-x: auto; /* إضافة تمرير أفقي عند الحاجة */
+                margin-top: 0px;
+            }
+
+            .table {
+                width: 100%;
+                border-collapse: collapse; /* دمج حدود الخلايا */
+            }
+
+            .table th,
+            .table td {
+                padding: 3px 10px;
+                //border-right: 1px solid rgba(0, 0, 0, 0.19);
+                white-space: nowrap; /* منع التفاف النص داخل الخلية */
+            }
+            .table thead tr.active th {
+                background-color: #e9e9e9; /* لون خلفية رأس الجدول */
+                position2: sticky; /* تثبيت رأس الجدول */
+                top: 0;
+                z-index: 1; /* التأكد من أن الرأس يظهر فوق المحتوى */
+            }
+            table {
+                /* ... */
+            }
+
+            th {
+                font-size: 16px; /* حجم الخط المطلوب */
+                /* ... */
+            }
+            td {
+                font-weight: 500;
+                font-size: 16px; /* حجم الخط المطلوب */
+                /* ... */
+            }
+            * {
+                cursor: default;
+                user-select: none;
+            }
+
+            .table td,
+            .table th2 {
+                padding: 0.45rem;
+                vertical-align: top;
+                border-top: 1px solid rgba(0, 0, 0, 0.1);
+            }
+
+            .selected-row {
+                background-color: #2196f3 !important;
+                color: white;
+                transition: background-color 0.3s ease; /* إضافة انتقال سلس للون الخلفية */
+            }
+
+            .table-header {
+                background-color: #f0f0f0;
+                padding: 10px;
+                text-align: left;
+                font-weight: bold;
+            }
+
+            .content-wrapper {
+                margin-top: 35px; /* إضافة مسافة أعلى للابتعاد عن شريط التنقل */
+            }
+
+            .table-striped tbody tr:nth-of-type(odd) {
+                //background-color: rgba(0, 0, 0, 0.05);
+                //background-color: #F5F5F5;
+            }
+
+            tr.classRunning {
+                background-color: #ff4982;
+                color: #fff;
+            }
+            tr.classPending {
+                background-color: #ffeaf1;
+            }
+            tr.classPause {
+                background-color: #d9d9d9;
+            }
+            tr.class1Stopped {
+                background-color: #e7f4fe;
+                color: #000;
+            } //	background-color:#2196F3;
+            tr.classRSS {
+                background-color: #75f94d;
+            }
+
+            * {
+                -webkit-user-select: none; /* Safari */
+                -moz-user-select: none; /* Firefox */
+                -ms-user-select: none; /* IE10+/Edge */
+                user-select: none; /* معيار CSS */
+            }
+            .table th {
+                /* ... أنماط أخرى ... */
+                //transition: background-color 0.1s ease; /* إضافة انتقال سلس */
+            }
+
+            .table th:hover {
+                background-color: #d1d1d1 !important; /* لون الخلفية عند التمرير */
+            }
+
+            .top-nav {
+                z-index: 1;
+                position: absolute;
+                top: 0; /*43px */
+                left: 1;
+                margin-left: 0px;
+                width: 100%; /* عرض كامل الصفحة */
+                height2: 50px; /* ارتفاع المطلوب */
+                background-color2: #e9e9e9; /* لون الخلفية */
+                color: #000;
+                box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1); /* ظل خفيف */
+                display: flex; /* عرض عناصر داخل الشريط بجانب بعض */
+                align-items: center; /* محاذاة العناصر عموديا بالوسط */
+                justify-content: space-between; /* توزيع العناصر بين المسافتين المتبقيتين */
+                padding: 0px; /* مسافة داخلية */
+            }
+
+            /* أمثلة لعناصر داخل شريط التنقل (تعديل حسب الحاجة) */
+            .top-nav a2 {
+                color: #333;
+                text-decoration: none;
+                padding: 3px 10px 3px 10px;
+            }
+
+            .top-nav th:hover2 {
+                background-color: #d1d1d1;
+            }
+
+            .top-nav {
+                /* ... */
+                display: flex;
+            }
+
+            .top-nav a2 {
+                /* ... */
+                flex-grow: 1;
+            }
+
+            .top-nav a:nth-child(3) {
+                /* تخصيص العنصر الثالث */
+                width2: 40%;
+                text-align2: center;
+            }
+            .rounded-div {
+                background-color: #fff0f5; /* أزرق فاتح */
+                padding: 10px 4px 3px 4px; /* مساحة داخلية (اختياري) */
+                border-top-left-radius: 15px; /* انحناء الزاوية العلوية اليسرى */
+                border-top-right-radius: 15px; /* انحناء الزاوية العلوية اليمنى */
+                /* أو اختصارًا: */
+                /* border-radius: 15px 15px 0 0; */
+                width: auto; /* عرض تلقائي ليناسب المحتوى */
+                display: inline-block; /* مهم لضبط العرض بشكل صحيح */
+                box-sizing: border-box; /* تضمين الحواف وال padding في عرض العنصر */
+                overflow: hidden; /* منع أي محتوى من الخروج عن الحدود المنحنية */
+            }
+
+            .autostyle1 {
+                text-align: right;
+            }
+
+            * {
+                -webkit-user-select: none; /* Safari */
+                -moz-user-select: none; /* Firefox */
+                -ms-user-select: none; /* IE10+/Edge */
+                user-select: none; /* معيار CSS */
+            }
+            * {
+                cursor: default;
+                user-select: none;
+            }
+
+            button,
+            [role="button"] {
+                cursor: default;
+            }
+            button,
+            [type="button"] {
+                cursor: default;
+            }
+            .noCursor {
+                cursor: default;
+            }
+
+            .no-shadow {
+                box-shadow: none;
+            }
+
+            .table-hover tbody tr {
+                //color: var(--dattrtext-100);
+                //background-color: rgba(0, 0, 0, 0.075);
+                //background-color: var(--dattrtext-100); // #C7E3F9 #E7F4FE
+            }
+
+            .table-hover tbody tr:hover {
+                color: #212529;
+                //background-color: rgba(0, 0, 0, 0.075);
+                background-color: var(--dattrtext-100); // #C7E3F9 #E7F4FE
+            }
+
+            :root {
+                --dattrtext-100: #c7e3f9;
+                --red2-1: #ff4982;
+                --red2-2: #e54174;
+                --border-bottom-color: #d1d5db; /* gray-700 للوضع العادي */
+            }
+
+            .dark {
+                --dattrtext-100: #9ca3af;
+                --border-bottom-color: #3a3f55; /* gray-400 للوضع الداكن */
+            }
+
+            .darkdiv {
+                margin-top: 0px;
+                padding: 0px 1px 1px 1px;
+                height: 18px;
+            }
+            .lightdiv {
+                margin-top: 1px;
+                margin-left: 2px;
+                padding-top: 1px;
+            }
+            html,
+            body {
+                overflow: hidden; /* تعطيل التمرير */
+                overflow: hidden !important;
+                -ms-overflow-style: none !important;
+                scrollbar-width: none !important;
+            }
+            html::-webkit-scrollbar,
+            body::-webkit-scrollbar {
+                display: none; /* إخفاء شريط التمرير في Chrome و Edge */
+            }
+            .flex-1.h-full.overflow-y-auto {
+                /* استهداف الكلاسات المُحدَّدة */
+                overflow: hidden; /* أو الأنماط الأخرى */
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+			
+			#congrats {
+				z-index: 1;
+				pointer-events: none; /* لتمكين النقر على العناصر أسفل الoverlay */
+			}
+			
+			
+			
+			/* تعريف حركة النبض */
+			/* أسلوب التأثير */
+			.pulse-animation {
+			  animation: pulse 0.3s infinite ease-in-out;
+			}
+
+			/* تعريف التأثير */
+			@keyframes pulse {
+			  0%, 100% {
+				transform: scale(1);
+			  }
+			  50% {
+				transform: scale(1.03);
+			  }
+			}
+			
+			
+			
+        </style>
+        <script src="build/dist/alpine.min.js" defer></script>
+        <script>
+            tailwind.config = {
+                darkMode: "class",
+            };
+        </script>
+    </head>
+    <body onmousedown="return false" onselectstart="return false" oncopy="return false" oncut="return false" scroll="no">
+        <div x-data="setup()">
+            <div class="flex h-screen antialiased text-gray-900 bg-primary-200 dark:bg-primary-1700 dark:text-400">
+                <!-- Loading screen -->
+                <div id="loadings" x-ref="loading" class="fixed inset-0 z-50 flex items-center justify-center text-2xl font-semibold text-white bg-gray-100 dark:bg-primary-1600 hidden">
+                    .....
+                </div>
+                <!-- Sidebar -->
+                <div class="flex-1 h-full overflow-x-hidden overflow-y-auto">
+                    <!-- Main content -->
+                    <main>
+                        <!-- Content header -->
+                        <!-- Content -->
+                        <div class="mt-2">
+                            <!-- State cards -->
+							<div id="congrats" class="hidden absolute top-0 left-0 w-full h-full bg-transparent flex justify-center items-center">
+								<img src="img/congrats.gif" class="w-200 h-200" /> <img src="img/congrats.gif" class="w-200 h-200" /> <img src="img/congrats.gif" class="w-200 h-200" />
+							</div>
+                            <div id="headerp" class="grid grid-cols-1 gap-7 pr-2 pl-2 lg:grid-cols-4 xl:grid-cols-4">
+                                <!-- Value card 
+                           class="sticky top-0 z-10 w-full bg-white shadow rounded-2xl"
+                           
+                           -->
+						   
+                                <div id="scanstatus" class="flex items-center justify-between p-3 text-gray-900 bg-primary-1300 dark:bg-primary-1300 rounded-md shadow animated-div">
+                                    <div class="icon2" style="margin-top: -10px; margin-bottom: -25px; margin-left: -15px;">
+                                        <img id="scanimage" src="img/stop-sign-push-hand.png" style="margin-top: -15px; width: 90px; height: 90px;" class="py-1" />
+                                    </div>
+                                    <div>
+                                        <div class="inner">
+                                            <h3 id="scanattemptsnumber" class="scanattemptsnumberUpper text-[#0D3A5E]">0</h3>
+                                            <p id="scanattempts" class="scanattemptsUpper text-[#0D3A5E]">Checking Status</p>
+                                        </div>
+
+                                        <!--
+										<span class="inline-block px-2 py-px ml-2 text-xs text-gray-100 bg-gray-400 dark:bg-gray-600 rounded-md">
+                                            +4.4%
+                                        </span>
+										-->
+                                    </div>
+                                </div>
+                                <!-- Users card -->
+                                <div id="statusstartupdiv" class="flex2 items-center2 justify-between pl-3 pr-3 bg-primary-1100 rounded-md dark:bg-purple-800 shadow animated-div2" style="width: 105%; padding-top2: 14px;">
+                                    <div>
+                                        <table style="width: 100%;">
+											<tr>
+                                                <td class="pt-1"><span id="startuptypemain2" class="text-base font-medium leading-none tracking-wider text-primary-220 dark:text-purple-300">Every Seconds</span></td>
+                                                <td class2="text-right"><span id="checkdurationtime2" class="text-lglite font-semibold text-primary-220 dark:text-white">...</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td><span id="updatestatusmain" class="text-base font-medium leading-none tracking-wider text-primary-220 dark:text-purple-300">Update Status</span></td>
+                                                <td>
+                                                    <span id="updatestatus" class="text-base font-bold text-primary-220 dark:text-white">...</span>
+                                                    <span id="updatestatussvgback" class="inline-block float-right px-1 py-px text-xs bg-white dark:bg-white rounded-md">
+                                                        <svg
+                                                            id="updatestatusrunning"
+                                                            xmlns="http://www.w3.org/2000/svg"
+                                                            fill="none"
+                                                            viewBox="0 0 24 24"
+                                                            stroke="currentColor"
+                                                            aria-hidden="true"
+                                                            class="w-4 h-4 text-red-600 dark:text-red-600"
+                                                        >
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path>
+                                                        </svg>
+                                                        <svg id="updatestatuspending" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true" class="hidden w-4 h-4">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+                                                        </svg>
+                                                        <svg
+                                                            id="updatestatusstopped"
+                                                            xmlns="http://www.w3.org/2000/svg"
+                                                            fill="none"
+                                                            viewBox="0 0 24 24"
+                                                            stroke="currentColor"
+                                                            aria-hidden="true"
+                                                            class="hidden w-4 h-4 text-[#1197F3] dark:text-green-600"
+                                                        >
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                                                        </svg>
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="pt-0"><span id="startuptypemain" class="text-base font-medium leading-none tracking-wider text-primary-220 dark:text-purple-300">Startup Type</span></td>
+                                                <td class="pt-0">
+                                                    <span id="startuptype" class="text-base font-bold text-primary-220 dark:text-white">...</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                                <!-- Users card -->
+                                <div id="detectedattempts" class="flex2 items-center2 justify-between p-3 bg-primary-1000 rounded-md dark:bg-blue-900 shadow animated-div2" style="width: 94%; margin-left: 10px;">
+                                    <div>
+                                        <table style="width: 100%;">
+                                            <tr>
+                                                <td><span class="text-base font-medium leading-none tracking-wider text-primary-220 dark:text-blue-300">Detected Running</span></td>
+                                                <td>
+                                                    <span id="attemptsdetetced" class="text-lg font-bold text-primary-202 dark:text-white">0</span>
+                                                    <!--
+                                                    <span style="float: right;" class="inline-block px-2 py-px text-xs dark:text-black text-green-700 bg-green-100 dark:bg-slate-400 rounded-md">
+                                                        +5%
+                                                    </span>
+													-->
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td><span class="pt-1 text-base font-medium leading-none tracking-wider text-primary-220 dark:text-blue-300">Not Working Update</span></td>
+                                                <td>
+                                                    <span id="updatenotworking" class="pt-1 text-lg font-bold text-primary-002 dark:text-white">0</span>
+                                                    <!--
+													<span style="float: right;" class="inline-block px-2 py-px text-xs dark:text-black text-green-700 bg-green-100 dark:bg-slate-400 rounded-md">
+                                                        +5%
+                                                    </span>
+													-->
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                    <!--
+                                    <div>
+                                        <span>
+                                            <svg class="w-12 h-12 text-primary-1100 dark:text-primary-1000" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                                            </svg>
+                                        </span>
+                                    </div>
+									-->
+                                </div>
+                                <!-- Orders card -->
+                                <div id="scanstarttime" class="flex2 items-center2 justify-between pl-3 bg-primary-1500 rounded-md dark:bg-emerald-700 shadow animated-div2" style="margin-left: -10px; width: 104%; padding-top: 3px;">
+                                    <div>
+                                        <table style="width: 100%;">
+                                            <tr>
+                                                <td><span id="checkstarttimediv" class="text-base font-medium leading-none tracking-wider text-primary-220 dark:text-emerald-300">Check Start Time</span></td>
+                                                <td class2="text-right"><span id="checkstarttime" class="text-lglite font-semibold text-primary-220 dark:text-white">...</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td><span class="text-base font-medium leading-none tracking-wider text-primary-220 dark:text-emerald-300">Check Pause Time</span></td>
+                                                <td class2="text-right"><span id="checkpausetime" class="text-lglite font-semibold text-primary-220 dark:text-white">...</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td><span class="text-base font-medium leading-none tracking-wider text-primary-220 dark:text-emerald-300">Check Duration</span></td>
+                                                <td class2="text-right"><span id="checkdurationtime" class="text-lglite font-semibold text-primary-220 dark:text-white">...</span></td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                                <!-- Tickets card -->
+                                <!--
+                                <div class="flex items-center justify-between p-4 bg-white rounded-md dark:bg-primary-1600 shadow">
+                                    <div>
+                                        <h6 class="text-xs font-medium leading-none tracking-wider text-gray-500 uppercase dark:text-primary-400">
+                                            Tickets
+                                        </h6>
+                                        <span class="text-xl font-semibold">20,516</span>
+                                        <span class="inline-block px-2 py-px ml-2 text-xs text-primary-600 bg-primary-100 rounded-md">
+                                            +3.1%
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <span>
+                                            <svg class="w-12 h-12 text-gray-300 dark:text-primary-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                                            </svg>
+                                        </span>
+                                    </div>
+                                </div>
+								-->
+                            </div>
+
+                            <!-- Two grid columns -->
+                        </div>
+                    </main>
+                </div>
+            </div>
+        </div>
+        <!-- All javascript code in this project for now is just for demo DON'T RELY ON IT  -->
+        <!--Datatables -->
+        <script>
+				
+		function toggleCongrats() {
+			const congrats = document.getElementById('congrats');
+			congrats.classList.remove('hidden'); // إزالة الكلاس hidden
+
+			setTimeout(() => {
+				congrats.classList.add('hidden'); // إعادة الكلاس hidden بعد 5 ثوانٍ
+			}, 20000); // 5000 ميلي ثانية = 5 ثوانٍ
+		  }
+
+		  // مثال لاستدعاء الدالة (يمكنك استدعاؤها عند الحاجة)
+		 //toggleCongrats(); 
+		 //repeatAnimation(17, 1000);
+		
+		
+		// اختيار جميع العناصر div
+		const elements = document.querySelectorAll('.animated-div');
+
+		// دالة لإضافة فئة التأثير
+		function startAnimation() {
+		  elements.forEach(element => {
+			element.classList.add('pulse-animation');
+		  });
+		}
+
+		// دالة لإزالة فئة التأثير
+		function stopAnimation() {
+		  elements.forEach(element => {
+			element.classList.remove('pulse-animation');
+		  });
+		}
+
+		// دالة للتحكم في التكرار
+		function repeatAnimation(times, delay) {
+		  let counter = 0;
+
+		  const intervalId = setInterval(() => {
+			if (counter < times) {
+			  // تشغيل التأثير
+			  startAnimation();
+
+			  // إيقاف التأثير بعد التأخير المحدد
+			  setTimeout(() => {
+				stopAnimation();
+			  }, delay / 2); // إيقاف التأثير بعد نصف الفترة
+
+			  counter++;
+			} else {
+			  // إنهاء التكرار
+			  clearInterval(intervalId);
+			}
+		  }, delay); // التأخير بين كل مرة
+		}
+
+		// تشغيل التأثير 5 مرات مع تأخير 1500 ميلي ثانية بين كل مرة
+		//repeatAnimation(17, 1000);
+		
+		
+		
+		const currentThemes = JSON.parse(window.localStorage.getItem("dark")) || false; // الوضع الحالي
+					const loadingElement = document.getElementById('loadings');
+					
+					if(currentThemes) {
+						//alert(currentThemes);
+						loadingElement.classList.remove('bg-[#E1EAF1]'); // هذا هو الصنف الذي يُعطي اللون الأصلي
+						loadingElement.classList.remove('text-gray-500'); // هذا هو الصنف الذي يُعطي اللون الأصلي
+						loadingElement.classList.add('bg-[#232F3F]'); // يمكنك تغيير 'red' إلى أي لون آخر
+						loadingElement.classList.add('text-[#57C3EA]'); // يمكنك تغيير 'red' إلى أي لون آخر
+					} else {
+						//loadingElement.classList.remove('bg-[#E1EAF1]'); // هذا هو الصنف الذي يُعطي اللون الأصلي
+						//loadingElement.classList.remove('text-gray-500'); // هذا هو الصنف الذي يُعطي اللون الأصلي
+						loadingElement.classList.add('bg-[#FFF0F5]'); // يمكنك تغيير 'red' إلى أي لون آخر
+						//loadingElement.classList.add('text-[#57C3EA]'); // يمكنك تغيير 'red' إلى أي لون آخر
+					}
+		
+            const setColors = (color) => {
+                const root = document.documentElement;
+                root.style.setProperty("--color-primary-000", `var(--color-${color}-000)`); // primary-000
+                root.style.setProperty("--color-primary-100", `var(--color-${color}-100)`); // primary-100
+                root.style.setProperty("--color-primary-200", `var(--color-${color}-200)`); // primary-200
+                root.style.setProperty("--color-primary-220", `var(--color-${color}-220)`); // primary-220
+                root.style.setProperty("--color-primary-222", `var(--color-${color}-222)`); // primary-222
+                root.style.setProperty("--color-primary-202", `var(--color-${color}-202)`); // primary-202
+                root.style.setProperty("--color-primary-002", `var(--color-${color}-002)`); // primary-002
+                root.style.setProperty("--color-primary-300", `var(--color-${color}-300)`); // primary-300
+                root.style.setProperty("--color-primary-400", `var(--color-${color}-400)`); // primary-400
+                root.style.setProperty("--color-primary-440", `var(--color-${color}-440)`); // primary-440
+                root.style.setProperty("--color-primary-444", `var(--color-${color}-444)`); // primary-444
+                root.style.setProperty("--color-primary-404", `var(--color-${color}-404)`); // primary-404
+                root.style.setProperty("--color-primary-500", `var(--color-${color}-500)`); // primary-500
+                root.style.setProperty("--color-primary-600", `var(--color-${color}-600)`); // primary-600
+                root.style.setProperty("--color-primary-700", `var(--color-${color}-700)`); // primary-700
+                root.style.setProperty("--color-primary-770", `var(--color-${color}-770)`); // primary-770
+                root.style.setProperty("--color-primary-007", `var(--color-${color}-007)`); // primary-007
+                root.style.setProperty("--color-primary-707", `var(--color-${color}-707)`); // primary-707
+                root.style.setProperty("--color-primary-800", `var(--color-${color}-800)`); // primary-800
+                root.style.setProperty("--color-primary-880", `var(--color-${color}-880)`); // primary-880
+                root.style.setProperty("--color-primary-888", `var(--color-${color}-888)`); // primary-888
+                root.style.setProperty("--color-primary-808", `var(--color-${color}-808)`); // primary-808
+                root.style.setProperty("--color-primary-008", `var(--color-${color}-008)`); // primary-008
+                root.style.setProperty("--color-primary-900", `var(--color-${color}-900)`); // primary-900
+                root.style.setProperty("--color-primary-990", `var(--color-${color}-990)`); // primary-990
+                root.style.setProperty("--color-primary-999", `var(--color-${color}-999)`); // primary-999
+                root.style.setProperty("--color-primary-1000", `var(--color-${color}-1000)`); // primary-1000
+                root.style.setProperty("--color-primary-1100", `var(--color-${color}-1100)`); // primary-1100
+                root.style.setProperty("--color-primary-1200", `var(--color-${color}-1200)`); // primary-1200
+                root.style.setProperty("--color-primary-1300", `var(--color-${color}-1300)`); // primary-1300
+                root.style.setProperty("--color-primary-1400", `var(--color-${color}-1400)`); // primary-1400
+                root.style.setProperty("--color-primary-1500", `var(--color-${color}-1500)`); // primary-1500
+                root.style.setProperty("--color-primary-1600", `var(--color-${color}-1600)`); // primary-1600
+                root.style.setProperty("--color-primary-1700", `var(--color-${color}-1700)`); // primary-1700
+            };
+
+            const setup = () => {
+                const getTheme = () => JSON.parse(window.localStorage.getItem("dark")) || false; // الوضع الحالي
+                const getColor = () => window.localStorage.getItem("color") || "colored";
+
+                const applyInitialThemeAndColor = () => {
+                    const isDark = getTheme();
+                    const color = getColor();
+                    //updateFontFamily();
+                    //alert(isDark);
+                    if (!isDark) {
+                        //alert('Its Not Dark');
+                    }
+                    document.documentElement.classList.toggle("dark", isDark);
+                    setColors(color);
+                };
+
+                return {};
+            };
+
+            /*
+		// دالة لتحديث الخط بناءً على الوضع الحالي
+		const updateFontFamily = () => {
+			const appBigTitle = document.getElementById("appBigTitle"); // العنصر الذي سيتم تغيير خطه
+			const logoImage = document.getElementById("logoimage"); // العنصر الذي سيتم تغيير صورته
+			if (appBigTitle) {
+				const isDarkMode = JSON.parse(window.localStorage.getItem("dark")) || false; // الوضع الحالي
+				appBigTitle.style.fontFamily = isDarkMode ? "mybigtitlefontDark" : "mybigtitlefont"; // تغيير الخط
+				appBigTitle.style.fontSize = isDarkMode ? "35px" : "22.3pt"; // تغيير الحجم بناءً على الوضع
+				appBigTitle.style.letterSpacing = isDarkMode ? "2px" : "0px"; // تباعد الحروف
+				appBigTitle.style.wordSpacing = isDarkMode ? "10px" : "1px"; // تباعد الكلمات
+				// تغيير الصورة
+				logoImage.src = isDarkMode ? "img/logo-v2-inverted.png" : "img/logo-v2.png";
+			} else {
+				console.error("Element with id 'appBigTitle' not found!");
+				}
+		};
+		*/
+
+            // تحديث الخط عند تحميل الصفحة
+            //document.addEventListener("DOMContentLoaded", updateFontFamily);
+
+            document.addEventListener("DOMContentLoaded", function () {
+                document.documentElement.style.overflow = "hidden"; // أو الأنماط الأخرى لإخفاء الأشرطة مع إبقاء التمرير
+                document.documentElement.style.msOverflowStyle = "none";
+                document.documentElement.style.scrollbarWidth = "none";
+
+                const scanStatusDiv = document.getElementById("scanstatus");
+                if (scanStatusDiv) {
+                    scanStatusDiv.addEventListener("mouseover", function () {
+                        //alert('تم تمرير الماوس فوق العنصر!'); // عرض رسالة تنبيه
+                        const message = JSON.stringify({
+                            type: "mouse",
+                            event: "mouse.over",
+                            target: "scanstatus",
+                        });
+						console.log("message: " + message);
+                        window.chrome.webview.postMessage(message);
+                        // أو يمكنك تغيير محتوى العنصر بدلاً من عرض تنبيه:
+                        // scanStatusDiv.textContent = 'تم تمرير الماوس!';
+                    });
+
+                    scanStatusDiv.addEventListener("mouseout", function () {
+                        //alert('تم خارج الماوس فوق العنصر!'); // عرض رسالة تنبيه
+                        // يمكنك هنا تنفيذ كود عند خروج الماوس من العنصر
+                        const message = JSON.stringify({
+                            type: "mouse",
+                            event: "mouse.out",
+                            target: "scanstatus",
+                        });
+						console.log("message: " + message);
+                        window.chrome.webview.postMessage(message);
+                        // أو يمكنك تغيير محتوى العنصر بدلاً من عرض تنبيه:
+                        // scanStatusDiv.textContent = 'تم تمرير الماوس!';
+                    });
+
+                    scanStatusDiv.addEventListener("click", function () {
+                        //alert('تم خارج الماوس فوق العنصر!'); // عرض رسالة تنبيه
+                        // يمكنك هنا تنفيذ كود عند خروج الماوس من العنصر
+                        const message = JSON.stringify({
+                            type: "change.style",
+                            event: "click",
+                            id: "scanStatusDivStyle",
+                        });
+						console.log("message: " + message);
+                        window.chrome.webview.postMessage(message);
+                        // أو يمكنك تغيير محتوى العنصر بدلاً من عرض تنبيه:
+                        // scanStatusDiv.textContent = 'تم تمرير الماوس!';
+                    });
+                } else {
+                    console.error("لم يتم العثور على العنصر 'scanstatus'");
+                }
+            });
+
+            // استلام الرسائل من WebView2
+            window.chrome.webview.addEventListener("message", (event) => {
+                try {
+                    //const data = JSON.parse(event.data); // تحليل البيانات
+                    const data = JSON.parse(event.data);
+                    if (data.type !== undefined) {
+                        if (data.type === "theme.changed.success") {
+							console.log("تم استلام قيمة الوضع الجديد في backBody: " + data.type);
+                            //applyInitialThemeAndColor();
+                            document.documentElement.classList.toggle("dark", data.value);
+                            if (data.color) {
+                                setColors(data.color);
+                            }
+                        }
+                    }
+					
+                    console.log("headerp.html Data 1: ", event.data);
+					
+                    const statusStartupDiv = document.getElementById("statusstartupdiv");
+                    const scanimageImg = document.getElementById("scanimage");
+                    const scanAttemptsDiv = document.getElementById("scanattempts");
+                    const scanAttemptsNumberDiv = document.getElementById("scanattemptsnumber");
+                    const updateStatusDiv = document.getElementById("updatestatus");
+					const startupTypeDiv = document.getElementById("startuptype");
+					const attemptsDetetcedDiv = document.getElementById("attemptsdetetced");
+                    const updateNotWorkingDiv = document.getElementById("updatenotworking");
+                    const updateStatusSvgBackDiv = document.getElementById("updatestatussvgback");
+                    const updateStatusRunningDiv = document.getElementById("updatestatusrunning");
+                    const updateStatusPendingDiv = document.getElementById("updatestatuspending");
+                    const updateStatusStoppedDiv = document.getElementById("updatestatusstopped");
+                    const updateStatusMainDiv = document.getElementById("updatestatusmain");
+                    const startupTypeMainDiv = document.getElementById("startuptypemain");
+					
+					const fileNameWithExtension = scanimageImg.src.split('/').pop();
+					const fileNameWithoutExtension = fileNameWithExtension.split('.').slice(0, -1).join('.');
+					
+                    //alert(data.scanAttempts);
+                    dataType = data.type;
+					iStart = data.iStart;
+                    scanAttempts = data.scanAttempts;
+                    id = data.id;
+                    updateStatus = data.updateStatus;
+                    startupType = data.startupType;
+                    attemptsDetetced = data.attemptsDetetced;
+                    updateNotWorking = data.updateNotWorking;
+                    dateTime = data.dateTime;
+					
+                    if (updateStatus == "StartPending") {
+                        updateStatusText = "Start Pending";
+                    } else if (updateStatus == "StopPending") {
+                        updateStatusText = "Stop Pending";
+                    } else if (updateStatus == "PausedPending") {
+                        updateStatusText = "Paused Pending";
+                    } else {
+                        updateStatusText = updateStatus;
+                    }if (iStart == "iStart" && data.isRunning == "False" && id == "First") {
+						console.log("iStart");
+						const scanStatusDiv = document.getElementById('scanstatus');
+						const scanattemptsnumberText = document.getElementById('scanattemptsnumber');
+						const scanAttemptsText = document.getElementById('scanattempts');
+						const scanImage = document.getElementById('scanimage');
+						
+						if (scanStatusDiv) scanStatusDiv.classList.remove('text-gray-900');
+						if (scanStatusDiv) scanStatusDiv.classList.remove('bg-primary-1300');
+						if (scanStatusDiv) scanStatusDiv.classList.remove('dark:bg-primary-1300');
+						if (scanStatusDiv) scanStatusDiv.classList.add('text-white');
+						if (scanStatusDiv) scanStatusDiv.classList.add('bg-[#FF4982]');
+						if (scanStatusDiv) scanStatusDiv.classList.add('dark:bg-primary-500');
+						if (scanattemptsnumberText) scanattemptsnumberText.classList.remove('text-[#0D3A5E]');
+						if (scanattemptsnumberText) scanattemptsnumberText.classList.add('text-white');
+						if (scanAttemptsText) scanAttemptsText.classList.remove('text-[#0D3A5E]');
+						if (scanAttemptsText) scanAttemptsText.classList.add('text-white');
+						if (scanAttemptsText) scanAttemptsText.textContent = 'Start Check';
+						if (scanImage) scanImage.src = 'img/stop-sign-push-hand.png';
+					}
+                    if (dataType == "change.status" || dataType == "iStart" || iStart == "iStart") {
+						//console.log("headerp.html - data.scanAttempts: " + data.scanAttempts);
+                        //scanAttemptsDiv.textContent = 'Start Program';
+                        //id = 'First';
+                        //attemptsDetetced = '...';
+                        //updateNotWorking = '...';
+                        scanAttemptsDiv.textContent = scanAttempts;
+                        scanAttemptsNumberDiv.textContent = id;
+                        updateStatusDiv.textContent = updateStatusText;
+                        startupTypeDiv.textContent = startupType;
+                        attemptsDetetcedDiv.textContent = attemptsDetetced;
+                        updateNotWorkingDiv.textContent = updateNotWorking;
+						
+						console.log('isRunning: ' + data.isRunning);
+						
+                        if (updateStatus == "Running") {
+                            if(data.isRunning == "True") {
+								if(fileNameWithoutExtension != data.animatedScanPic+"2") {
+									scanimageImg.src = "img/"+data.animatedScanPic+"2.gif";
+								}
+							} else {
+								scanimageImg.src = "img/stop-sign-push-hand.png";
+							}
+                            statusStartupDiv.style.background = "#FB7185";
+                            //statusStartupDiv.style.color = '#fff';
+                            updateStatusDiv.style.color = "#fff";
+                            startupTypeDiv.style.color = "#fff";
+                            updateStatusMainDiv.style.color = "#F1F5F9";
+                            startupTypeMainDiv.style.color = "#F1F5F9";
+                            updateStatusSvgBackDiv.classList.remove("bg-primary-200");
+                            updateStatusSvgBackDiv.classList.add("bg-[#fff]");
+                            updateStatusPendingDiv.classList.add("hidden");
+                            updateStatusStoppedDiv.classList.add("hidden");
+                            updateStatusRunningDiv.classList.remove("hidden");
+                        } else if (updateStatus == "StartPending" || updateStatus == "StopPending" || updateStatus == "Paused" || updateStatus == "PausedPending") {
+                            if(data.isRunning == "True") {
+								if(fileNameWithoutExtension != data.animatedScanPic) {
+									scanimageImg.src = "img/"+data.animatedScanPic+".gif";
+								}
+							} else {
+								scanimageImg.src = "img/stop-sign-push-hand.png";
+							}
+							statusStartupDiv.style.background = "#CCFF66";
+                            //statusStartupDiv.style.color = '#000';
+                            updateStatusDiv.style.color = "#000";
+                            startupTypeDiv.style.color = "#000";
+                            updateStatusMainDiv.style.color = "#4B5563";
+                            startupTypeMainDiv.style.color = "#4B5563";
+                            updateStatusSvgBackDiv.classList.remove("bg-primary-200");
+                            updateStatusSvgBackDiv.classList.add("bg-[#fff]");
+                            updateStatusPendingDiv.classList.remove("hidden");
+                            updateStatusStoppedDiv.classList.add("hidden");
+                            updateStatusRunningDiv.classList.add("hidden");
+                            if (updateStatus == "StartPending") {
+                                updateStatusPendingDiv.classList.add("text-[#EF4444]");
+                            } else {
+                                updateStatusPendingDiv.classList.add("text-[#22C55E]");
+                            }
+                        } else {
+							//console.log("scanimageImg: " + fileNameWithoutExtension);
+                            if(data.isRunning == "True") {
+								if(fileNameWithoutExtension != data.animatedScanPic) {
+									scanimageImg.src = "img/"+data.animatedScanPic+".gif";
+								}
+							} else {
+								scanimageImg.src = "img/stop-sign-push-hand.png";
+							}
+                            statusStartupDiv.style.background = "";
+                            updateStatusMainDiv.style.color = "";
+                            updateStatusDiv.style.color = "";
+                            startupTypeMainDiv.style.color = "";
+                            startupTypeDiv.style.color = "";
+                            //statusStartupDiv.style.background = '#E7F4FE';
+                            //statusStartupDiv.style.color = '#696969';
+
+                            //attemptsDetetcedDiv.style.color = '';
+                            //updateNotWorkingDiv.style.color = '';
+
+                            updateStatusSvgBackDiv.classList.remove("bg-[#fff]");
+                            updateStatusSvgBackDiv.classList.add("bg-[#E0EDF6]");
+                            updateStatusPendingDiv.classList.add("hidden");
+                            updateStatusStoppedDiv.classList.remove("hidden");
+                            updateStatusRunningDiv.classList.add("hidden");
+                        }
+                    } else if(dataType == "Success") {
+						//alert("Animate Now Oke - dataType: " + dataType);
+						toggleCongrats(); 
+						repeatAnimation(17, 1000);
+					}
+                } catch (error) {
+                    console.error("خطأ في تحليل JSON:", error); // مهم جداً لكشف أي أخطاء
+                    console.error("البيانات المستلمة الخام:", event.data); // طباعة البيانات الخام للمساعدة في تصحيح الأخطاء
+                }
+            });
+
+
+
+// استلام الرسائل من WebView2
+window.chrome.webview.addEventListener('message00', event => {
+	try {
+		const data = JSON.parse(event.data); // تحليل البيانات
+		console.log("headerp.html Data 00: ", event.data); // طباعة الكائن بالكامل للتأكد
+		
+		const statusStartupDiv = document.getElementById('statusstartupdiv');
+		const scanAttemptsDiv = document.getElementById('scanattempts');
+		const scanAttemptsNumberDiv = document.getElementById('scanattemptsnumber');
+		const updateStatusDiv = document.getElementById('updatestatus');
+		const startupTypeDiv = document.getElementById('startuptype');
+		const attemptsDetetcedDiv = document.getElementById('attemptsdetetced');
+		const updateNotWorkingDiv = document.getElementById('updatenotworking');
+		
+		
+		
+		
+		
+	} catch (error) {
+		console.error("خطأ في تحليل JSON:", error); // مهم جداً لكشف أي أخطاء
+		console.error("البيانات المستلمة الخام:", event.data); // طباعة البيانات الخام للمساعدة في تصحيح الأخطاء
+  }
+});
+
+
+// استلام الرسائل من WebView2
+window.chrome.webview.addEventListener('message0', event => {
+  try {
+    //const data = JSON.parse(event.data); // تحليل البيانات
+    const data = JSON.parse(event.data);
+	
+	const statusStartupDiv = document.getElementById('statusstartupdiv');
+	const scanAttemptsDiv = document.getElementById('scanattempts');
+	const scanAttemptsNumberDiv = document.getElementById('scanattemptsnumber');
+	const updateStatusDiv = document.getElementById('updatestatus');
+	const startupTypeDiv = document.getElementById('startuptype');
+	const attemptsDetetcedDiv = document.getElementById('attemptsdetetced');
+	const updateNotWorkingDiv = document.getElementById('updatenotworking');
+	
+	
+    //console.log("البيانات المستلمة:", data); // طباعة الكائن بالكامل للتأكد
+    //console.log("iHeader:", data.iHeader);
+    //console.log("updateStatus:", data.updateStatus);
+	//console.log("startupType:", data.startupType);
+    //console.log("iMessage:", data.iMessage);
+	
+     // هنا يمكنك استخدام البيانات كما تشاء، على سبيل المثال عرضها في صفحة الويب
+     //document.getElementById("myHeader").innerText = data.iHeader; // مثال لعرض iHeader في عنصر HTML
+     //document.getElementById("status").innerText = data.status;
+	 
+	 //console.log("headerp.html Data: ", event.data);
+	 
+	//alert(data.iHeader);
+	
+	iHeader = data.iHeader;
+	scanAttempts = data.scanAttempts;
+	id = data.id;
+	updateStatus = data.updateStatus;
+	startupType = data.startupType;
+	attemptsDetetced = data.attemptsDetetced;
+	updateNotWorking = data.updateNotWorking;
+	dateTime = data.dateTime;
+	
+	if(updateStatus == "StartPending") {
+		updateStatusText = "Start Pending";
+	} else if(updateStatus == "StopPending") {
+		updateStatusText = "Stop Pending";
+	} else if(updateStatus == "PausedPending") {
+		updateStatusText = "Paused Pending";
+	} else {
+		updateStatusText = updateStatus;
+	}
+	if(iHeader == "iStart") {
+		//scanAttemptsDiv.textContent = 'Start Program';
+		//id = 'First';
+		//attemptsDetetced = '...';
+		//updateNotWorking = '...';
+	}
+	scanAttemptsDiv.textContent = scanAttempts;
+	scanAttemptsNumberDiv.textContent = id;
+	updateStatusDiv.textContent = updateStatusText;
+	startupTypeDiv.textContent = startupType;
+	attemptsDetetcedDiv.textContent = attemptsDetetced;
+	updateNotWorkingDiv.textContent = updateNotWorking;
+	
+	if (updateStatus == "Running") {
+		statusStartupDiv.style.background = '#FF4982';
+		statusStartupDiv.style.color = '#fff';
+		updateStatusDiv.style.color = '#fff';
+		startupTypeDiv.style.color = '#fff';
+			
+	} else if (updateStatus == "StartPending" || updateStatus == "StopPending" || updateStatus == "Paused" || updateStatus == "PausedPending" ) {
+		statusStartupDiv.style.background = '#DFFF00';
+		statusStartupDiv.style.color = '#000';
+		updateStatusDiv.style.color = '#000';
+		startupTypeDiv.style.color = '#000';
+	} else {
+		statusStartupDiv.style.background = '#E7F4FE';
+		statusStartupDiv.style.color = '#696969';
+		updateStatusDiv.style.color = '#000';
+		startupTypeDiv.style.color = '#000';
+	}
+	
+  } catch (error) {
+    console.error("خطأ في تحليل JSON:", error); // مهم جداً لكشف أي أخطاء
+    console.error("البيانات المستلمة الخام:", event.data); // طباعة البيانات الخام للمساعدة في تصحيح الأخطاء
+  }
+});
+
+function doIt(scanStatusDivStyle) {
+	//alert('New Style: ' + scanStatusDivStyle);
+	const scanAttemptsNumber = document.getElementById('scanattemptsnumber');
+	const scanAttemptsDiv = document.getElementById('scanattempts');
+	
+	if (scanStatusDivStyle == 'checkrunningupper') {
+		//alert('Lower');
+		scanAttemptsNumber.classList.remove('scanattemptsnumberUpper');
+		scanAttemptsNumber.classList.add('scanattemptsnumberLower');
+		
+		scanAttemptsDiv.classList.remove('scanattemptsUpper');
+		scanAttemptsDiv.classList.add('scanattemptsLower');
+		
+	} else {
+		//alert('Upper');
+		scanAttemptsNumber.classList.remove('scanattemptsnumberLower');
+		scanAttemptsNumber.classList.add('scanattemptsnumberUpper');
+		
+		scanAttemptsDiv.classList.remove('scanattemptsLower');
+		scanAttemptsDiv.classList.add('scanattemptsUpper');
+	}
+}
+
+document.addEventListener('click', function(event) {
+	// الحصول على معلومات حول مكان الضغطة (اختياري)
+	var x = event.clientX;
+	var y = event.clientY;
+	// إرسال رسالة إلى تطبيق WinForms
+	const message = JSON.stringify({
+		type: "hide.menu",
+		x: x,
+		y: y,
+	});
+	console.log("message: " + message);
+	window.chrome.webview.postMessage(message);
+});
+
+
+
+
+        </script>
+    </body>
+</html>

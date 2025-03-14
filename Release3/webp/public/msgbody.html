@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تنسيق الصفحة</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+		@font-face {
+                font-family: "mybigtitlefontDark";
+                src: url("../../fonts/Cairo-Black.ttf");
+            }
+        html, body {
+		height: 100%;
+		font-family: cairo, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+                    "Noto Color Emoji";
+        }
+	* {
+		-webkit-user-select: none; /* Safari */
+		-moz-user-select: none; /* Firefox */
+		-ms-user-select: none; /* IE10+/Edge */
+		user-select: none; /* معيار CSS */
+	}
+	* {
+		cursor: default;
+		user-select: none;
+	}
+	.noCursor {
+		cursor: default;
+	}
+	.no-shadow {
+		box-shadow: none;
+	}
+	html, body {
+		overflow: hidden; /* تعطيل التمرير */
+		overflow: hidden !important;
+		-ms-overflow-style: none !important;
+		scrollbar-width: none !important;
+	}
+	html::-webkit-scrollbar, body::-webkit-scrollbar {
+		display: none; /* إخفاء شريط التمرير في Chrome و Edge */
+	}
+        #main {
+			background-color: #FFF;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+		.msg {
+			font-size: 1rem;
+			line-height: 1.75rem;
+			color: #0D3A5E;
+			color: #808080;
+			border: none !important;
+			font-weight2: 600;
+			/* **إضافة خصائص التمرير العمودي:** */
+			overflow-y: auto; /* أو يمكنك استخدام: overflow-y: scroll; */
+			padding-right: 5px; /* إضافة مساحة يمين للـ div لمنع تداخل النص مع شريط التمرير (اختياري) */
+		}
+        .body {
+            flex: 1; /* يسمح بتغيير الارتفاع حسب المحتوى */
+            overflow-y: hidden; /* يضيف شريط تمرير عند الحاجة */
+            padding: 15px 15px 15px 15px;
+            background-color: #FFF;
+			display: flex;
+			gap: 25px; /* تحديد الفجوة بين الأزرار */
+        }
+
+        .footer {
+			background-color: #fff;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+            height: 65px; /* ارتفاع ثابت */
+            text-align: center;
+            line-height: 65px; /* لضبط النص في المنتصف */
+            font-size: 16px;
+        }
+
+        .footer div {
+            display: flex;
+			line-height: 65px; /* لضبط النص في المنتصف */
+            justify-content: center; /* جعل الأزرار في المنتصف */
+            gap: 25px; /* تحديد الفجوة بين الأزرار */
+            padding: 0 0px;
+			padding-top: 10px;
+        }
+	
+	.btn {
+	  background-color: #FF4982; /* اللون الأساسي الأحمر */
+	  color: white; /* لون النص أبيض */
+	  padding-left2:1.25rem;
+	  padding-right2:1.5rem;
+	  padding-top2: 6px;
+	  padding-bottom2: 6px;
+	  text-decoration: none;
+	  display: flex;
+	  font-size: 1.115rem;
+	  font-weight:400;
+	  text-align: center;
+	  justify-content: center;
+	  align-items: center;
+      line-height: 40px; /* نفس ارتفاع الزر */
+	  border: none !important;
+	  outline: none;
+	  height: 40px;
+	  width: 110px;
+	  border-radius: 5px;
+	  padding: 2px 0px 0px 0px;
+	  margin: 0px 0px; /* أضفنا هذه السطر لإضافة مسافة 5px بين كل زر والآخر */
+	}
+	
+    .buttonYes {
+	  background-color: #FF4982; /* اللون الأساسي الأحمر */
+	  padding: 2px 0px 0px 0px;
+	}
+
+	.buttonYes:hover {
+	  background-color: #D83D6E; /* لون أكثر احمرارًا عند التمرير */
+	}
+
+	.buttonYes:active {
+	  background-color: #F87171; /* لون أغمق عند الضغط */
+	}
+	
+	.buttonNo {
+	  background-color: #2196F3; /* اللون الأساسي الأحمر */
+	  padding: 2px 0px 0px 0px;
+	}
+
+	.buttonNo:hover {
+	  background-color: #1D86DA; /* لون أكثر احمرارًا عند التمرير */
+	}
+
+	.buttonNo:active {
+	  background-color: #79B3DA; /* لون أغمق عند الضغط */
+	}
+	
+    </style>
+</head>
+<body>
+    <div id="main" class="main">
+        <div class="body">
+            <img id="img" src="img/exclamation.png" style="float: left; width: 32px; height: 32px;">
+            <span id="msg" class="msg" style="margin: 0px; padding: 0px 0px 0px 0px;">
+                {msg}
+            </span>
+        </div>
+        <div class="footer">
+            <div>
+                <button id="buttonOk" class="btn buttonNo" style="display: none;">Ok</button>
+				<button id="buttonYes" class="btn buttonYes" style="display: none;">Yes</button>
+                <button id="buttonNo" class="btn buttonNo" style="display: none;">No</button>
+            </div>
+        </div>
+    </div>
+	
+	  <script>
+    // إخفاء الشاشة التحميل بعد تحميل الصفحة
+			function changeMsg(type, encodedMsg, buttons) {
+				console.log(encodedMsg);
+				//alert(encodedMsg);
+				
+				// **[جديد] - دالة لفك ترميز HTML في Javascript**
+				function decodeHtml(encodedString) {
+					const tempElement = document.createElement('textarea'); // إنشاء عنصر textarea مؤقت
+					tempElement.innerHTML = encodedString;               // تعيين innerHTML إلى النص المرمّز
+					return tempElement.value;                             // إرجاع قيمة العنصر (النص المفكك)
+				}
+				
+				// **[جديد] - فك ترميز HTML من encodedMsg**
+				const decodedMsg = decodeHtml(encodedMsg);
+				//alert(encodedMsg);
+				
+				// **[جديد] - دالة لتنسيق نص سجل التغييرات إلى HTML (اختياري - يمكنك دمجها أو استخدام الدالة الموجودة)**
+				function formatChangeLogToHtmlInJavascript(changeLogText) {
+					let htmlContent = "<div style='font-family: sans-serif; padding: 0px;'>";
+
+					const lines = changeLogText.split('\n');
+
+					lines.forEach(line => {
+						let formattedLine = line;
+						formattedLine = formattedLine.replace(/^\*\*(.+?)\*\*:/, '<b>$1:</b>');
+						if (formattedLine.startsWith("- ")) {
+							formattedLine = "<li>" + formattedLine.substring(2) + "</li>";
+						}
+						htmlContent += "<p>" + formattedLine + "</p>";
+					});
+
+					htmlContent += "</div>";
+					return htmlContent;
+				}
+
+
+				// **[جديد] - تنسيق النص المفكك باستخدام دالة التنسيق Javascript**
+				const formattedHtml = formatChangeLogToHtmlInJavascript(decodedMsg);
+
+				// **[تعديل] - عرض HTML المنسق في عنصر HTML (بدلاً من alert)**
+				// **[هام] - تأكد من وجود عنصر HTML في صفحتك يحمل id="changeLogDisplay" لعرض سجل التغييرات فيه.**
+				const changeLogDisplayElement = document.getElementById('msg');
+				if (changeLogDisplayElement) {
+					changeLogDisplayElement.innerHTML = formattedHtml; // تعيين innerHTML للعنصر لعرض HTML المنسق
+				} else {
+					console.error("عنصر HTML بعرف 'msg' غير موجود في الصفحة!"); // رسالة خطأ إذا لم يتم العثور على العنصر
+					alert("خطأ: عنصر العرض غير موجود. تحقق من صفحة HTML."); // تنبيه خطأ للمستخدم (اختياري)
+				}
+				
+				const img = document.getElementById("img");
+				const titleDiv = document.getElementById("msg");
+				const buttonOk = document.getElementById("buttonOk");
+				const buttonYes = document.getElementById("buttonYes");
+				const buttonNo = document.getElementById("buttonNo");
+				
+				if(type == 'Information') {
+					img.src = 'img/information.png';
+				} else if(type == 'Warning') {
+					img.src = 'img/exclamation.png';
+				} else if(type == 'Error') {
+					img.src = 'img/error.png';
+				}
+				
+				if(buttons == 'OK') {
+					buttonYes.style.display = 'none';
+					buttonNo.style.display = 'none';
+					buttonOk.style.display = '';
+				} else if(buttons == 'YesNo') {
+					buttonOk.style.display = 'none';
+					buttonYes.style.display = '';
+					buttonNo.style.display = '';
+				}
+				
+				//titleDiv.innerHTML = encodedMsg;
+			}
+			
+			//changeMsg('Information', "New Message", 'YesNo'); // type [Information, Warning, Error]', 'msg [string]', 'buttons [OK, YesNo]
+			
+			document.addEventListener("DOMContentLoaded", function () {
+				// دالة لجلب قيمة اللون من localStorage. إذا لم تكن موجودة، تُرجع القيمة الافتراضية "colored".
+				const getColor = () => window.localStorage.getItem("color") || "colored";
+
+				// مصفوفة تحتوي على معلومات الأزرار: id (معرف العنصر في HTML) و originalText (النص الأصلي أو القيمة التي سيتم إرسالها).
+				const labels = [
+					{ id: "buttonNo", originalText: "No" }, // زر الإغلاق
+					{ id: "buttonOk", originalText: "Ok" }, // زر التصغير
+					{ id: "buttonYes", originalText: "Yes" }, // زر الإعدادات
+				];
+
+				// المرور على كل عنصر في مصفوفة labels.
+				labels.forEach((label) => {
+					// جلب العنصر من DOM باستخدام معرفه (id).
+					const element = document.getElementById(label.id);
+
+					// التحقق من وجود العنصر في DOM.
+					if (element) {
+						// إضافة مستمعين للأحداث (mouseover, mouseout, click) لكل زر.
+						element.addEventListener("mouseover", () => {
+							// عند تحريك مؤشر الماوس فوق الزر:
+							// يتم إرسال رسالة إلى webView2.
+							// إذا كان الزر هو "buttonColoredLite"، يتم إرسال قيمة اللون من localStorage.
+							// خلاف ذلك، يتم إرسال النص الأصلي (originalText).
+							sendMessage("mouse.over", label.id, label.id === "buttonColoredLite" ? getColor() : label.originalText);
+						});
+
+						element.addEventListener("mouseout", () => {
+							// عند تحريك مؤشر الماوس خارج الزر:
+							// نفس المنطق كما في mouseover.
+							sendMessage("mouse.out", label.id, label.id === "buttonColoredLite" ? getColor() : label.originalText);
+						});
+
+						element.addEventListener("click", () => {
+							// عند النقر على الزر:
+							// نفس المنطق كما في mouseover و mouseout.
+							sendMessage("button.click", label.id, label.id === "buttonColoredLite" ? getColor() : label.originalText);
+						});
+					} else {
+						// إذا لم يتم العثور على العنصر، يتم تسجيل خطأ في وحدة التحكم (Console).
+						console.error(`العنصر ذو المعرف ${label.id} غير موجود.`);
+					}
+				});
+			});
+			
+			// دالة مُوحّدة لإرسال الرسائل مع معالجة الأخطاء
+			function sendMessage(eventType, targetId, message) { // قيمة افتراضية للرسالة
+				try {
+					const messageObject = {
+						type: eventType,
+						target: targetId,
+						jmessage: message // إضافة الرسالة الاختيارية
+					};
+					console.log(JSON.stringify(messageObject, null, 2)); // طباعة JSON للتأكد من صحته
+					window.chrome.webview.postMessage(JSON.stringify(messageObject));
+				} catch (error) {
+					console.error("خطأ في إرسال الرسالة:", error);
+				}
+			}
+  </script>
+</body>
+</html>

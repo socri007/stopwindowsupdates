@@ -1,0 +1,1740 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+        <script src="build/js/lucide@latest"></script>
+		<link href="build/css/css2.css" rel="stylesheet" />
+		<script src="build/js/tailwindcss.cdn.3.4.16.js"></script>
+		<link rel="stylesheet" href="build/css/tailwind.css" />
+        <!--Regular Datatables CSS-->
+
+        <style>
+            /*Overrides for Tailwind CSS */
+            /*Form fields*/
+
+            @font-face {
+                font-family: "mybigtitlefont";
+                src: url("../../fonts/NexaRustSlab-BlackShadow01.otf");
+            }
+            @font-face {
+                font-family: "mybigtitlefontDark";
+                src: url("../../fonts/Cairo-Black.ttf");
+            }
+            html {
+                font-family: cairo, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+                    "Noto Color Emoji";
+                /* 1 */
+                line-height: 1.5;
+                /* 2 */
+            }
+
+            .inner {
+                padding: 0px;
+            }
+            .inner .scanattemptsnumberUpper {
+                margin: -12px 0px 0 0;
+                font-size: 40px;
+                font-family: mybigtitlefont;
+                font-weight: bold;
+                white-space: nowrap;
+                padding: 0;
+                letter-spacing: 0.02em; /* مسافة مُعتمدة على حجم الخط */
+            }
+            .inner .scanattemptsnumberLower {
+                margin: -10px 0px 0px 0;
+                font-size: 40px;
+                font-family: mybigtitlefont;
+                font-weight: bold;
+                white-space: nowrap;
+                padding: 0;
+                letter-spacing: 0.02em; /* مسافة مُعتمدة على حجم الخط */
+            }
+            .inner .scanattemptsUpper {
+                margin: -12px 0 -9px 0;
+                font-size: 25px;
+                font-family: cairo;
+                font-weight: bold;
+                text-align: right;
+            }
+            .inner .scanattemptsLower {
+                margin: -87px 0 10px 0;
+                font-size: 22px;
+                font-family: cairo;
+                font-weight: bold;
+                text-align: right;
+            }
+
+            .table-responsive {
+                max-height: 305px; /* تحديد ارتفاع أقصى للعنصر الحاوي */
+                overflow-y: auto; /* إضافة تمرير عمودي عند تجاوز الارتفاع */
+                overflow-x: auto; /* إضافة تمرير أفقي عند الحاجة */
+                margin-top: 0px;
+            }
+
+            .table {
+                width: 100%;
+                border-collapse: collapse; /* دمج حدود الخلايا */
+            }
+
+            .table th,
+            .table td {
+                padding: 3px 10px;
+                //border-right: 1px solid rgba(0, 0, 0, 0.19);
+                white-space: nowrap; /* منع التفاف النص داخل الخلية */
+            }
+            .table thead tr.active th {
+                background-color: #e9e9e9; /* لون خلفية رأس الجدول */
+                position2: sticky; /* تثبيت رأس الجدول */
+                top: 0;
+                z-index: 1; /* التأكد من أن الرأس يظهر فوق المحتوى */
+            }
+            table {
+                /* ... */
+            }
+
+            th {
+                font-size: 16px; /* حجم الخط المطلوب */
+                /* ... */
+            }
+            td {
+                font-weight: 500;
+                font-size: 16px; /* حجم الخط المطلوب */
+                /* ... */
+            }
+            * {
+                cursor: default;
+                user-select: none;
+            }
+
+            .table td,
+            .table th2 {
+                padding: 0.45rem;
+                vertical-align: top;
+                border-top: 1px solid rgba(0, 0, 0, 0.1);
+            }
+
+            .selected-row {
+                background-color: #2196f3 !important;
+                color: white;
+                transition: background-color 0.3s ease; /* إضافة انتقال سلس للون الخلفية */
+            }
+
+            .table-header {
+                background-color: #f0f0f0;
+                padding: 10px;
+                text-align: left;
+                font-weight: bold;
+            }
+
+            .content-wrapper {
+                margin-top: 35px; /* إضافة مسافة أعلى للابتعاد عن شريط التنقل */
+            }
+
+            .table-striped tbody tr:nth-of-type(odd) {
+                //background-color: rgba(0, 0, 0, 0.05);
+                //background-color: #F5F5F5;
+            }
+
+            tr.classRunning {
+                background-color: #ff4982;
+                color: #fff;
+            }
+            tr.classPending {
+                background-color: #ffeaf1;
+            }
+            tr.classPause {
+                background-color: #d9d9d9;
+            }
+            tr.class1Stopped {
+                background-color: #e7f4fe;
+                color: #000;
+            } //	background-color:#2196F3;
+            tr.classRSS {
+                background-color: #75f94d;
+            }
+
+            * {
+                -webkit-user-select: none; /* Safari */
+                -moz-user-select: none; /* Firefox */
+                -ms-user-select: none; /* IE10+/Edge */
+                user-select: none; /* معيار CSS */
+            }
+            .table th {
+                /* ... أنماط أخرى ... */
+                //transition: background-color 0.1s ease; /* إضافة انتقال سلس */
+            }
+
+            .table th:hover {
+                background-color: #d1d1d1 !important; /* لون الخلفية عند التمرير */
+            }
+
+            .top-nav {
+                z-index: 1;
+                position: absolute;
+                top: 0; /*43px */
+                left: 1;
+                margin-left: 0px;
+                width: 100%; /* عرض كامل الصفحة */
+                height2: 50px; /* ارتفاع المطلوب */
+                background-color2: #e9e9e9; /* لون الخلفية */
+                color: #000;
+                box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1); /* ظل خفيف */
+                display: flex; /* عرض عناصر داخل الشريط بجانب بعض */
+                align-items: center; /* محاذاة العناصر عموديا بالوسط */
+                justify-content: space-between; /* توزيع العناصر بين المسافتين المتبقيتين */
+                padding: 0px; /* مسافة داخلية */
+            }
+
+            /* أمثلة لعناصر داخل شريط التنقل (تعديل حسب الحاجة) */
+            .top-nav a2 {
+                color: #333;
+                text-decoration: none;
+                padding: 3px 10px 3px 10px;
+            }
+
+            .top-nav th:hover2 {
+                background-color: #d1d1d1;
+            }
+
+            .top-nav {
+                /* ... */
+                display: flex;
+            }
+
+            .top-nav a2 {
+                /* ... */
+                flex-grow: 1;
+            }
+
+            .top-nav a:nth-child(3) {
+                /* تخصيص العنصر الثالث */
+                width2: 40%;
+                text-align2: center;
+            }
+            .rounded-div {
+                background-color: #fff0f5; /* أزرق فاتح */
+                padding: 10px 4px 3px 4px; /* مساحة داخلية (اختياري) */
+                border-top-left-radius: 15px; /* انحناء الزاوية العلوية اليسرى */
+                border-top-right-radius: 15px; /* انحناء الزاوية العلوية اليمنى */
+                /* أو اختصارًا: */
+                /* border-radius: 15px 15px 0 0; */
+                width: auto; /* عرض تلقائي ليناسب المحتوى */
+                display: inline-block; /* مهم لضبط العرض بشكل صحيح */
+                box-sizing: border-box; /* تضمين الحواف وال padding في عرض العنصر */
+                overflow: hidden; /* منع أي محتوى من الخروج عن الحدود المنحنية */
+            }
+
+            .autostyle1 {
+                text-align: right;
+            }
+
+            * {
+                -webkit-user-select: none; /* Safari */
+                -moz-user-select: none; /* Firefox */
+                -ms-user-select: none; /* IE10+/Edge */
+                user-select: none; /* معيار CSS */
+            }
+            * {
+                cursor: default;
+                user-select: none;
+            }
+
+            button,
+            [role="button"] {
+                cursor: default;
+            }
+            button,
+            [type="button"] {
+                cursor: default;
+            }
+            .noCursor {
+                cursor: default;
+            }
+
+            .no-shadow {
+                box-shadow: none;
+            }
+
+            .table-hover tbody tr {
+                //color: var(--dattrtext-100);
+                //background-color: rgba(0, 0, 0, 0.075);
+                //background-color: var(--dattrtext-100); // #C7E3F9 #E7F4FE
+            }
+
+            .table-hover tbody tr:hover {
+                color: #212529;
+                //background-color: rgba(0, 0, 0, 0.075);
+                background-color: var(--dattrtext-100); // #C7E3F9 #E7F4FE
+            }
+
+            :root {
+                --dattrtext-100: #c7e3f9;
+                --red2-1: #ff4982;
+                --red2-2: #e54174;
+                --border-bottom-color: #d1d5db; /* gray-700 للوضع العادي */
+            }
+
+            .dark {
+                --dattrtext-100: #9ca3af;
+                --border-bottom-color: #3a3f55; /* gray-400 للوضع الداكن */
+            }
+
+            .darkdiv {
+                margin-top: 5px;
+                padding: 0px 1px 1px 1px;
+                height: 18px;
+            }
+            .lightdiv {
+                margin-top: 6px;
+                margin-left: 2px;
+                padding-top: 1px;
+            }
+            html,
+            body {
+                overflow: hidden; /* تعطيل التمرير */
+                overflow: hidden !important;
+                -ms-overflow-style: none !important;
+                scrollbar-width: none !important;
+            }
+            html::-webkit-scrollbar,
+            body::-webkit-scrollbar {
+                display: none; /* إخفاء شريط التمرير في Chrome و Edge */
+            }
+			/* الوضع العادي */
+    #yesproceed {
+      accent-color: var(--color-primary-600);
+    }
+
+    #yesproceed:checked {
+      accent-color: var(--color-primary-300);
+    }
+
+    /* الوضع الداكن */
+    .dark #yesproceed {
+      accent-color: var(--color-primary-400);
+    }
+
+    .dark #yesproceed:checked {
+      accent-color: var(--color-primary-008);
+    }
+	
+	
+	
+	
+	/* Custom checkbox styles */
+    .custom-checkbox {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 1.5rem; /* زيادة العرض */
+        height: 1.5rem; /* زيادة الارتفاع */
+        border: 2px solid #cbd5e1;
+        border-radius: 0.25rem;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.2s ease;
+        vertical-align: middle; /* محاذاة رأسية مع النص */
+    }
+
+    /* Dark mode border */
+    .dark .custom-checkbox {
+        border-color: #475569;
+    }
+
+    /* Light mode background */
+    .custom-checkbox {
+        background-color: #ffffff;
+    }
+
+    /* Dark mode background */
+    .dark .custom-checkbox {
+        background-color: #1e293b;
+    }
+	.dark .custom-checkbox:checked {
+        background-color: #9333EA;
+        border-color: #7E22CE;
+    }
+	
+    /* Checked state */
+    .custom-checkbox:checked {
+        background-color: var(--color-primary-300);
+        border-color: var(--color-primary-300);
+    }
+
+    /* Checkmark */
+    .custom-checkbox:checked::after {
+        content: '';
+        position: absolute;
+        left: 7px; /* تعديل موضع علامة الصح */
+        top: 1px; /* تعديل موضع علامة الصح */
+        width: 6px; /* تعديل حجم علامة الصح */
+        height: 16px; /* تعديل حجم علامة الصح */
+        border: solid white;
+        border-width: 0 3px 3px 0;
+        transform: rotate(40deg);
+    }
+
+    /* Hover state */
+    .custom-checkbox:hover {
+        border-color: #3b82f6; // #3b82f6;
+    }
+
+    /* Style the label to align with the checkbox */
+    label {
+        display: inline-flex; /* Make the label a flex container */
+        align-items: center; /* Vertically align the label content */
+    }
+	
+	.dark body::-webkit-scrollbar {
+			  background-color: #1f2937;
+			}
+
+			.dark body::-webkit-scrollbar-thumb {
+			  background-color: #4b5563;
+			}
+
+			.dark body {
+				scrollbar-color: #4b5563 #1f2937;
+			}
+			
+			
+			
+			
+			
+			
+			
+			
+			 /* Add new styles for sidebar */
+		  .sidebar {
+			width: 320px;
+			height: 100vh;
+			overflow-y: auto;
+			position: fixed;
+			left: 0;
+			top: 0;
+			border-right: 1px solid #e5e7eb;
+			transition: background-color 0.3s ease;
+		  }
+
+		  .dark .sidebar {
+			border-right-color: #374151;
+		  }
+
+		  .content {
+			margin-left: 300px;
+			padding: 2rem;
+		  }
+
+		  .nav-link {
+			display: block;
+			padding: 0.75rem 1rem;
+			color: #4b5563;
+			text-decoration: none;
+			transition: all 0.3s ease;
+			border-left: 3px solid transparent;
+			margin-bottom: 2px;
+		  }
+
+		  .nav-link:hover {
+			background-color: #f3f4f6;
+			color: #2563eb;
+		  }
+
+		  .nav-link.active {
+			background-color: #eff6ff;
+			color: #2563eb;
+			border-left-color: #2563eb;
+			font-weight: 600;
+		  }
+
+		  /* Dark mode styles */
+		  .dark .nav-link {
+			color: #d1d5db;
+		  }
+
+		  .dark .nav-link:hover {
+			background-color: #374151;
+			color: #60a5fa;
+		  }
+
+		  .dark .nav-link.active {
+			background-color: #374151;
+			color: #60a5fa;
+			border-left-color: #60a5fa;
+		  }
+
+		  /* Nested navigation styles */
+		  .nav-group {
+			margin-left: 1rem;
+			border-left: 1px solid #e5e7eb;
+		  }
+
+		  .dark .nav-group {
+			border-left-color: #374151;
+		  }
+
+		  .nav-group .nav-link {
+			font-size: 0.95rem;
+			padding: 0.5rem 1rem;
+		  }
+
+		  /* Smooth scrolling */
+		  html {
+			scroll-behavior: smooth;
+		  }
+
+		  /* Hide scrollbar but keep functionality */
+		  .sidebar::-webkit-scrollbar {
+			width: 6px;
+		  }
+
+		  .sidebar::-webkit-scrollbar-track {
+			background: transparent;
+		  }
+
+		  .sidebar::-webkit-scrollbar-thumb {
+			background-color: #cbd5e1;
+			border-radius: 3px;
+		  }
+
+		  .dark .sidebar::-webkit-scrollbar-thumb {
+			background-color: #4b5563;
+		  }
+	  
+	  
+	  
+	  
+	  
+	  
+	  
+			
+        </style>
+        <script src="build/dist/alpine.min.js" defer></script>
+        <script>
+            tailwind.config = {
+                darkMode: "class",
+            };
+        </script>
+    </head>
+    <body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-200" onmousedown="return false" onselectstart="return false" oncopy="return false" oncut="return false">
+        <div x-data="setup()" x-init="$refs.loading.classList.add('hidden'); setColors(color);" :class="{ 'dark': isDark}">
+		
+            <div class="flex h-screen antialiased text-gray-900 bg-gray-100 dark:bg-primary-1600 dark:text-400">
+                <!-- Loading screen -->
+                <div id="loadings" x-ref="loading" class="fixed inset-0 z-50 flex items-center justify-center text-2xl font-semibold text-gray-500 bg-[#E1EAF1] dark:bg-primary-1600" style="display2: none;">
+                    Initializing...
+                </div>
+                <!-- Sidebar -->
+				<div class="flex-1 h-full overflow-x-hidden overflow-y-auto p-0 bg-gray-100 dark:bg-primary-1700" style="padding-bottom: 50px;">
+				
+				<!-- Sidebar Navigation -->
+				  <nav class="sidebar bg-white dark:bg-gray-800 py-6">
+					<div class="px-4 mb-6">
+					  <h2 class="text-xl font-bold text-gray-800 dark:text-white">Contents</h2>
+					</div>
+					<ul class="space-y-1">
+					  <li>
+						<a target="#what-is" class="nav-link flex items-center"><img src="img/win.png" class="w-5 h-5 text-blue-500 dark:text-blue-400 mr-3"/>What is Stop Windows Updates?</a>
+					  </li>
+					  <li>
+						<a target="#why-need" class="nav-link flex items-center"><span class="text-2xl">🎯</span> Why Do You Need This Program?</a>
+						<!--
+						<ul class="pl-4 space-y-1 mt-1">
+						  <li><a target="#saving-internet" class="nav-link">Saving Internet Package</a></li>
+						  <li><a target="#control-updates" class="nav-link">Control Over Updates</a></li>
+						  <li><a target="#ease-of-use" class="nav-link">Ease of Use</a></li>
+						</ul>
+						-->
+					  </li>
+					  <li>
+						<a target="#installation" class="nav-link flex items-center"><i data-lucide="package-open" class="w-6 h-6 text-blue-500 dark:text-blue-400 mr-3"></i>How to Install</a>
+					  </li>
+					  <li>
+						<a target="#how-to-open" class="nav-link flex items-center"><i data-lucide="monitor-play" class="w-6 h-6 text-blue-500 dark:text-blue-400 mr-3"></i>How to Open</a>
+					  </li>
+					  <li>
+						<a target="#program-interface" class="nav-link flex items-center"><img src="img/logo-v2.png" class="w-6 h-6 text-red-500 dark:text-red-400 mr-3"/>Program Interface</a>
+					  </li>
+					  <li>
+						<a target="#auscsi" class="nav-link flex items-center"><i data-lucide="chart-candlestick" class="w-6 h-6 text-blue-500 dark:text-blue-400 mr-3"></i>Automatic Update Services Check Status Information</a>
+					  </li>
+					  <li>
+						<a target="#auscl" class="nav-link flex items-center"><i data-lucide="captions" class="w-6 h-6 text-blue-500 dark:text-blue-400 mr-3"></i>Automatic Update Check Logs</a>
+					  </li>
+					  <li>
+						<a target="#saus" class="nav-link flex items-center"><i data-lucide="monitor-x" class="w-6 h-6 text-red-500 dark:text-red-400 mr-3"></i>Stopping Automatic Update</a>
+					  </li>
+					  <li>
+						<a target="#dausp" class="nav-link flex items-center"><i data-lucide="alert-triangle" class="w-7 h-7 text-red-500 dark:text-red-200 mr-3"></i>Disabling Update Permanently</a>
+					  </li>
+					  <li>
+						<a target="#program-options" class="nav-link flex items-center"><i data-lucide="monitor-cog" class="w-6 h-6 text-blue-500 dark:text-blue-400 mr-3"></i>Program Options</a>
+					  </li>
+					  <li>
+						<a target="#important-notes" class="nav-link flex items-center"><i data-lucide="alert-triangle" class="w-7 h-7 text-yellow-500 dark:text-yellow-200 mr-3"></i>Important Notes</a>
+					  </li>
+					</ul>
+				  </nav>
+				
+					<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12a" style="margin-left: 320px;">
+
+						<!-- Header -->
+						<div class="text-center mb-12" style="margin-top: 0px;">
+							<h1 class="text-3xl mt-2 font-bold text-gray-900 dark:text-white mb-4">Stop Windows Updates - Help Content</h1>
+						<!-- <p class="text-xl text-gray-600 dark:text-gray-300">Important information about managing Windows Updates safely</p> -->
+						</div>
+						
+						<!-- Warnings Section -->
+						<section class="mb-0" style="margin-bottom: -10px;">
+							<h2 id="introduction" class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Introduction</h2>
+							<h2 id="what-is" class="text-2xl font-bold text-gray-900 dark:text-white mb-0">What is the Stop Automatic Windows Updates Program?</h2>
+							<div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6 mt-4 text-justify">
+								<div class="flex items-center mb-4">
+									<img src="img/win.png" class="w-6 h-6 text-blue-500 dark:text-blue-400 mr-3"/>
+									<h3 class="text-xl font-semibold text-gray-800 dark:text-white">Are You Suffering From Automatic Windows Updates That Consume Internet And Bother You?</h3>
+								</div>
+								<h3 class="text-xl font-semibold text-gray-800 dark:text-white">This program is the solution!</h3>
+								<p class="text-lg text-gray-600 dark:text-gray-300 ml-0">Stop Windows Updates Program is an easy-to-use tool that allows you to control stopping Windows operating system updates. It is a program that checks the status type of the Windows Automatic Updates service to see if it is running (Running), stopped (Stopped), or pending (Start Pending - Stop Pending), and checks the startup type to see if it is automatic (Automatic), manual (Manual), or disabled (Disabled) to organize them according to the user's desire by choosing what suits them in the program interface. The program allows you to stop automatic updates for the Windows operating system in the services app from running to stopped when the user wants to stop the updates service while browsing the internet or for any other reason, and restart it when they want. It can also disable the startup type to disabled from the settings screen and not from the program interface, and it cannot disable it unless after reading the warnings, risks, and tips mentioned and taking full responsibility for this procedure. Knowing that it is not possible to disable the startup type to disabled permanently in modern versions of Windows, as Windows automatically restarts the startup type to manual after a period of time.</p>
+							</div>
+								
+							<h2 id="why-need" class="text-2xl font-bold text-gray-900 dark:text-white mb-3">Why Do You Need This Program?</h2>
+							<div class="grid gap-6 md:grid-cols-1">
+								<div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 text-justify">
+									<div class="flex items-center mb-2">
+									<!-- <i data-lucide="lock" class="w-6 h-6 text-red-500 dark:text-red-400 mr-3"></i> -->
+										<h3 id="saving-internet" class="text-xl font-semibold text-gray-800 dark:text-white"><span class="text-2xl">🎯</span> Saving Internet Package Consumption</h3>
+									</div>
+									<p class="text-lg text-gray-600 dark:text-gray-300 ml-0">Automatic updates consume a large amount of data in the background without the user's knowledge, which affects limited internet packages.</p>
+									
+									<div class="flex items-center mb-2 mt-4">
+										<!-- <i data-lucide="lock" class="w-6 h-6 text-red-500 dark:text-red-400 mr-3"></i> -->
+										<h3 id="control-updates" class="text-xl font-semibold text-gray-800 dark:text-white">⚙️ Control Over Updates</h3>
+									</div>
+									<p class="text-lg text-gray-600 dark:text-gray-300 ml-0">Many users do not need all automatic updates and want to update the system manually only when needed, to maintain system stability and save resources.</p>
+									
+									<div class="flex items-center mb-2 mt-4">
+										<!-- <i data-lucide="lock" class="w-6 h-6 text-red-500 dark:text-red-400 mr-3"></i> -->
+										<h3 id="ease-of-use" class="text-xl font-semibold text-gray-800 dark:text-white">💡 Ease of Use</h3>
+									</div>
+									<p class="text-lg text-gray-600 dark:text-gray-300 ml-0">The need for a simple and easy program with a clear user interface, allowing control over Windows updates without the need for complex steps. As a user: I believe that I do not need all these updates because I perform a comprehensive update for everything I need from drivers and the like when installing the Windows system and installing the antivirus, I only update Windows Defender from time to time and this suits me very well and I do not need more. There are similar programs, but I did not find an easy and simple program that does what I want, so I made a copy with a very simple interface that fulfills the requirement, but a friend suggested that I pay a little attention to the program's appearance and development. This program has effectively met these needs for me and provided me with a comfortable and easy user experience to control Windows updates manually.</p>
+								</div>
+								
+								<h2 id="installation" class="text-2xl font-bold text-gray-900 dark:text-white mb-0" style="margin: 0px;">How to Install The Program?</h2>
+								<div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6" style="margin-top: -10px;">
+									<div class="flex items-center mb-4">
+										<i data-lucide="package-open" class="w-6 h-6 text-blue-500 dark:text-blue-400 mr-3"></i>
+										<h3 class="text-xl font-semibold text-gray-800 dark:text-white">(I will write how to install the program after I finish all the details at a later time)</h3>
+									</div>
+									<p class="text-lg text-gray-600 dark:text-gray-300 ml-0">(I will write how to install the program after I finish all the details at a later time)</p>
+								</div>
+								
+								<h2 id="how-to-open" class="text-2xl font-bold text-gray-900 dark:text-white mb-0" style="margin: 0px;">How to Open?</h2>
+								<div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 text-justify" style="margin-top: -10px;">
+									<div class="flex items-center mb-4">
+										<i data-lucide="monitor-play" class="w-6 h-6 text-blue-500 dark:text-blue-400 mr-3"></i>
+										<h3 id="running-program" class="text-xl font-semibold text-gray-800 dark:text-white">Running The Program</h3>
+									</div>
+									<p class="text-gray-600 dark:text-gray-300 ml-0 font-bold text-lg">To run the Stop Windows Updates Program, you can follow these steps:</p>
+									<ol class="text-lg list-decimal pr-6 space-y-2 ml-4">
+										<li>Search For The Program: Look for the program icon in the "Start" menu or on the desktop. You can also use the search box in the "Start" menu to find the program quickly<br/>
+										<img src="help-images/open-the-program.png" style="width: 50%;" />Searching in the "Start" menu</li>
+										<li>Open The Program: Double-click on the program icon to open it</li>
+										<li>Approve Permissions: If a "User Account Control" window appears asking for permission to open the program, click "Yes" to continue. Important note: The Stop Windows Updates Program needs administrator privileges to control Windows system services, so it is necessary to approve these permissions for the program to work correctly</li>
+										<li>Program Interface: After opening the program, the main program interface will appear</li>
+									</ol>
+								</div>
+								
+								<h2 id="program-interface" class="text-2xl font-bold text-gray-900 dark:text-white mb-0" style="margin: 0px;">Program Interface</h2>
+								<div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 text-justify" style="margin-top: -10px;">
+									<div class="flex items-center mb-4">
+										<img src="img/logo-v2.png" class="w-6 h-6 text-red-500 dark:text-red-400 mr-3"/>
+										<h3 class="text-xl font-semibold text-gray-800 dark:text-white">The Main Program Interface</h3>
+									</div>
+									<img src="help-images/program-interface2.png" style="width: 70%;" />Program Interface
+									<p class="text-gray-600 dark:text-gray-300 ml-0 font-bold text-lg mt-2">When you run the program, you will see a main interface that includes the following elements:</p>
+									<ol class="text-lg list-decimal pr-6 space-y-2 ml-4">
+										<li>Program Logo: Appears in the top left corner of the window</li>
+										<li>Program Title: Appears at the top of the window</li>
+										<li>Time and Date Information: Appears in the top right corner of the window, the time and date is the same as the system time</li>
+										<li>Buttons at The Top of The Window: 
+											<ul class="list-disc pr-6 space-y-2 ml-6">
+												<li>Window Close Button (
+													<button
+                                                        id="buttonClose2"
+                                                        type="button"
+                                                        class="noCursor pl-3 pr-3 py-0 font-medium text-sm text-center inline-flex items-center text-white bg-primary-400"
+                                                        style="cursor: default; padding-top: 3px; padding-bottom: 3px;"
+                                                    >
+                                                        <svg class="w-3 h-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 17.94 6M18 18 6.06 6" />
+                                                        </svg>
+                                                    </button>
+													): To close the program</li>
+												<li>Minimize Button (
+													<button
+                                                        id="buttonMinimize"
+                                                        type="button"
+                                                        class="noCursor pl-3 pr-3 py-0 font-medium text-sm text-center inline-flex items-center text-white bg-primary-800"
+                                                        style="cursor: default; padding-top: 3px; padding-bottom: 3px;"
+                                                    >
+                                                        <svg class="w-3 h-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14" />
+                                                        </svg>
+														</button>
+													): To minimize the program window and place it in the taskbar</li>
+												<li>Settings Button (
+													<button
+                                                        id="buttonSettings"
+                                                        type="button"
+                                                        class="noCursor pl-3 pr-3 py-0 font-medium text-sm text-center inline-flex items-center text-white bg-primary-800"
+                                                        style="cursor: default; padding-top: 1px; padding-bottom: 1px;"
+                                                    >
+                                                        <svg class="w-3.5 h-3.5 mr-1" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 560 560" style="padding-top: 1px;">
+                                                            <path
+                                                                d="M496.851,212.213l-48.806-12.201c-4.106-14.108-9.722-27.572-16.666-40.205l25.89-43.151 c4.722-7.869,3.482-17.943-3.008-24.432l-34.485-34.485c-6.489-6.49-16.563-7.729-24.432-3.008l-43.151,25.89 c-12.633-6.944-26.097-12.56-40.205-16.666l-12.201-48.805C297.561,6.246,289.562,0,280.384,0h-48.769 c-9.177,0-17.177,6.246-19.403,15.149l-12.201,48.805c-14.108,4.106-27.572,9.722-40.205,16.666l-43.151-25.89 c-7.87-4.722-17.943-3.482-24.432,3.008L57.738,92.223c-6.489,6.489-7.729,16.562-3.008,24.432l25.89,43.151 c-6.944,12.633-12.56,26.097-16.666,40.205l-48.806,12.201C6.246,214.438,0,222.438,0,231.615v48.769 c0,9.177,6.246,17.177,15.149,19.403l48.806,12.201c4.106,14.108,9.722,27.572,16.666,40.205l-25.89,43.151 c-4.722,7.869-3.482,17.943,3.008,24.432l34.485,34.485c6.489,6.49,16.563,7.729,24.432,3.008l43.151-25.89 c12.633,6.944,26.097,12.56,40.205,16.666l12.201,48.805c2.226,8.903,10.225,15.149,19.403,15.149h48.769 c9.177,0,17.177-6.246,19.403-15.149l12.201-48.805c14.108-4.106,27.572-9.722,40.205-16.666l43.151,25.89 c7.87,4.722,17.943,3.482,24.432-3.008l34.485-34.485c6.489-6.489,7.729-16.562,3.008-24.432l-25.89-43.151 c6.944-12.633,12.56-26.097,16.666-40.205l48.806-12.201c8.903-2.226,15.149-10.226,15.149-19.403v-48.769 C512,222.438,505.754,214.438,496.851,212.213z M256,336c-44.112,0-80-35.888-80-80s35.888-80,80-80s80,35.888,80,80 S300.112,336,256,336z"
+                                                            />
+                                                        </svg>
+                                                        <span style="font-size: 10px;">Settings</span>
+                                                    </button>
+													): To open the program settings window and access program customization options</li>
+												<li>Help Button (
+												<button
+                                                        id="buttonHelp"
+                                                        type="button"
+                                                        class="noCursor pl-2 pr-2 py-0 font-medium text-sm text-center inline-flex items-center text-primary-440 bg-primary-707"
+                                                        style="cursor: default; padding-top: 0px; padding-bottom: 0px;"
+                                                    >
+                                                        <svg class="w-.5 h-3.5 mr-1" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                                                            <path
+                                                                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"
+                                                            />
+                                                        </svg>
+                                                        <span style="font-size: 11px;">Help</span>
+                                                    </button>
+												): When you click on the "Help" button, a drop-down menu will open containing the following options:
+													<br/><br/><img src="help-images/menu.png" style="width: 30%;" /><br/>
+													<ol class="list-decimal pr-6 space-y-2 ml-4">
+														<li>View Help ?: A window that provides users with a comprehensive guide in English or Arabic on how to use the program and its various features. You can access detailed information about program functions, how to deal with the user interface, available settings, and answers to frequently asked questions that the user may encounter</li>
+														<li>Program Website: A page will be opened in your internet browser to provide information about the Program Website and those in charge of it. Here you can find the developer's contact information, or a profile of the developer and their experience, or links to other projects of the developer if available</li>
+														<li>Send Feedback: A new window will be opened aimed at facilitating the process of users communicating with the program developer directly. Through this window, you can report errors and problems you encounter in the program, and send your feedback and suggestions to improve the program and develop it in the future. User feedback and suggestions help the developer understand user needs and improve the quality of the program</li>
+														<li>Check for Update: A new window will be opened that allows the user to check for updates or new versions of the program available online. If there is a new update, you can view information about the update and download and install it to get the latest features, improvements and bug fixes</li>
+														<li>About Program: A window will be opened that provides basic and important information about the program itself, such as the Program Name, the current Version Number, Copyright Information, and any other identification information that the developer deems necessary to introduce users to the program</li>
+													</ol>
+												</li>
+												<li>Mode switch button (
+													<button id="buttonTheme2222" aria-hidden="true" class="noCursor relative focus:outline-none" style=" padding-top: 0px; padding-bottom: 0px; ">
+                                                        <div
+                                                            class="w-9 h-4 transition rounded-full outline-none bg-gray-200 dark:bg-purple-400 border dark:border-gray-500 border-slate-300"
+                                                            style="margin-right: 0px; margin-top: 6px;"
+                                                        ></div>
+                                                        <!-- 
+                                                    														   <input id="startcheckwhenopencheckbox" type="checkbox" class="peer appearance-none w-11 h-5 bg-slate-200 rounded-full border dark:bg-gray-700 dark:border-slate-900 border-gray-300 dark:checked:border-gray-500 dark:checked:bg-purple-600  checked:border-gray-400 checked:bg-primary-800 transition-colors duration-300" />
+                                                    															<label for="startcheckwhenopencheckbox" class="absolute top-0 left-0 w-5 h-5 dark:bg-gray-600 bg-white rounded-full border dark:peer-checked:bg-purple-300 dark:peer-checked:border-purple-700 peer-checked:border-blue-500 dark:border-slate-800 border-slate-300 shadow-sm transition-transform duration-300 peer-checked:translate-x-6 ">
+                                                    														   absolute top-0 left-0 w-5 h-5 dark:bg-gray-600 bg-white rounded-full border dark:peer-checked:bg-purple-300 dark:peer-checked:border-purple-700 peer-checked:border-blue-500 dark:border-slate-800 border-slate-300 shadow-sm transition-transform duration-300 peer-checked:translate-x-6 -->
+                                                        <div
+                                                            class="absolute top-1s left-0 inline-flex items-center justify-center w-4 h-4 border dark:border-gray-500 border-slate-300 transition-all duration-300 transform scale-110 rounded-full shadow-sm"
+                                                            style2="margin-top: 8px;"
+                                                            :class="{ 'translate-x-0 -translate-y-px  text-gray-500 bg-gray-100 lightdiv': !isDark, 'translate-x-6 text-rose-100 bg-purple-500 border-gray-500 darkdiv': isDark }"
+                                                        >
+                                                            <svg x-show="!isDark" id="buttonLiteDark-dark-icon222" class="w-4 h-4" style="margin-top: 2px; margin-left: 0px;" fill="currentColor" viewBox="0 0 130 130">
+                                                                <path
+                                                                    d="M96.371,59.349a3.2,3.2,0,0,0-3.946.618,37.08,37.08,0,1,1-52.387-52.4,3.211,3.211,0,0,0-3.1-5.435,49.321,49.321,0,0,0-25.049,17.4A48.952,48.952,0,0,0,50.952,98a48.519,48.519,0,0,0,29.512-9.895A49.361,49.361,0,0,0,97.869,63.05,3.2,3.2,0,0,0,96.371,59.349Z"
+                                                                />
+                                                                <path
+                                                                    d="M43.282,34.257,52.876,41.2,49.2,52.449a3.714,3.714,0,0,0,5.716,4.159l9.565-6.979,9.573,6.984a3.714,3.714,0,0,0,5.709-4.162L76.083,41.2l9.595-6.944a3.714,3.714,0,0,0-2.19-6.721l-11.834.023L68.017,16.293l0-.009a3.716,3.716,0,0,0-7.072.009L57.305,27.558l-11.838-.023a3.714,3.714,0,0,0-2.185,6.722Z"
+                                                                />
+                                                            </svg>
+															<svg x-show="isDark" id="buttonLiteDark-light-icon222" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" style="margin-top: 4px; padding: 1px;" viewBox="0 0 95 120" fill="currentColor" x="0px" y="0px">
+                                                                <path
+                                                                    fill-rule="evenodd"
+                                                                    clip-rule="evenodd"
+                                                                    d="M46 9C46 6.79086 47.7909 5 50 5C52.2091 5 54 6.79086 54 9V19C54 21.2091 52.2091 23 50 23C47.7909 23 46 21.2091 46 19V9ZM70 50C70 61.0457 61.0457 70 50 70C38.9543 70 30 61.0457 30 50C30 38.9543 38.9543 30 50 30C61.0457 30 70 38.9543 70 50ZM81.8198 18.18C80.2577 16.6179 77.725 16.6179 76.1629 18.18L69.0918 25.2511C67.5297 26.8132 67.5297 29.3458 69.0918 30.9079C70.6539 32.47 73.1866 32.47 74.7487 30.9079L81.8198 23.8368C83.3819 22.2747 83.3819 19.7421 81.8198 18.18ZM91 46C93.2091 46 95 47.7909 95 50C95 52.2091 93.2091 54 91 54H81C78.7909 54 77 52.2091 77 50C77 47.7909 78.7909 46 81 46H91ZM81.8198 81.8196C83.3819 80.2575 83.3819 77.7249 81.8198 76.1628L74.7487 69.0917C73.1866 67.5296 70.6539 67.5296 69.0918 69.0917C67.5297 70.6538 67.5297 73.1865 69.0918 74.7486L76.1629 81.8196C77.725 83.3817 80.2577 83.3817 81.8198 81.8196ZM46 81C46 78.7909 47.7909 77 50 77C52.2091 77 54 78.7909 54 81V91C54 93.2091 52.2091 95 50 95C47.7909 95 46 93.2091 46 91V81ZM30.9081 69.0921C29.346 67.53 26.8134 67.53 25.2513 69.0921L18.1802 76.1632C16.6181 77.7253 16.6181 80.2579 18.1802 81.82C19.7423 83.3821 22.275 83.3821 23.8371 81.82L30.9081 74.749C32.4702 73.1869 32.4702 70.6542 30.9081 69.0921ZM19 46C21.2091 46 23 47.7909 23 50C23 52.2091 21.2091 54 19 54H9C6.79086 54 5 52.2091 5 50C5 47.7909 6.79086 46 9 46H19ZM30.9081 30.908C32.4702 29.3459 32.4702 26.8133 30.9081 25.2512L23.8371 18.1801C22.275 16.618 19.7423 16.618 18.1802 18.1801C16.6181 19.7422 16.6181 22.2749 18.1802 23.8369L25.2513 30.908C26.8134 32.4701 29.346 32.4701 30.9081 30.908Z"
+                                                                />
+                                                            </svg>
+                                                        </div>
+                                                    </button>
+													): To switch the mode between Dark Mode and Light Mode. It changes the colors of texts and other elements inside the program based on the selected mode state to provide a comfortable experience for the eye</li>
+											</ul>
+										</li>
+									</ol>
+								</div>
+								
+								<h2 id="auscsi" class="text-2xl font-bold text-gray-900 dark:text-white mb-0" style="margin: 0px;">Automatic Update Services Check Status Information</h2>
+								<div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 text-justify" style="margin-top: -10px;">
+									<div class="flex items-center mb-4">
+										<i data-lucide="chart-candlestick" class="w-6 h-6 text-blue-500 dark:text-blue-400 mr-3"></i>
+										<h3 class="text-xl font-semibold text-gray-800 dark:text-white">Automatic update services check status information is displayed in the middle part of the program interface, and includes the following elements</h3>
+									</div>
+									<img src="help-images/automatic-update-services-check-status-information.png" style="width: 90%;" /><br/>
+									<!-- جدول حالة الخدمة -->
+									<div class="overflow-x-auto">
+										<table class="w-full border-collapse border border-gray-300 dark:border-gray-600">
+											<thead class="bg-gray-200 dark:bg-gray-700">
+												<tr>
+													<th class="p-3 border">Element</th>
+													<th class="p-3 border">Description</th>
+												</tr>
+											</thead>
+											<tbody>
+												<tr>
+													<td class="p-3 border" style="width: 200px;">1- Update Status</td>
+													<td class="p-3 border">Displays the current status of the Windows Automatic Updates service, and is one of the following statuses: Stopped or Running or Pending (Start Pending - Puase Pending) </td>
+												</tr>
+												<tr>
+													<td class="p-3 border">2- Startup Type</td>
+													<td class="p-3 border">Displays the startup type for the Windows Updates service, and is one of the following types: Manual or Automatic or Disabled</td>
+												</tr>
+												<tr>
+													<td class="p-3 border">3- Detected Running</td>
+													<td class="p-3 border">Displays the number of times the automatic update was detected as running while the program was running </td>
+												</tr>
+												<tr>
+													<td class="p-3 border">4- Not Working Update</td>
+													<td class="p-3 border">Displays the number of times the automatic update did not work while the program was running </td>
+												</tr>
+												<tr>
+													<td class="p-3 border">5- Check Start Time</td>
+													<td class="p-3 border">Displays the start time of the program to check the Windows Automatic Updates service, and changes to Last Resume Time when the check is paused temporarily and resumed again </td>
+												</tr>
+												<tr>
+													<td class="p-3 border">6- Check Pause Time</td>
+													<td class="p-3 border">Displays the time the program was paused temporarily to check the automatic updates service </td>
+												</tr>
+												<tr>
+													<td class="p-3 border">7- Check Duration</td>
+													<td class="p-3 border">Displays the duration of the program running to check the automatic updates service since the program started. The program accumulates the duration cumulatively throughout the running period </td>
+												</tr>
+												<!-- باقي الصفوف -->
+											</tbody>
+										</table>
+									</div>
+								</div>
+								
+								<h2 id="auscl" class="text-2xl font-bold text-gray-900 dark:text-white mb-0" style="margin: 0px;">Automatic Update Services Check Logs</h2>
+								<div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 text-justify" style="margin-top: -10px;">
+									<div class="flex items-center mb-4">
+										<i data-lucide="captions" class="w-6 h-6 text-blue-500 dark:text-blue-400 mr-3"></i>
+										<h3 class="text-xl font-semibold text-gray-800 dark:text-white">Automatic update services check logs are displayed in the lower part of the program interface, and are divided into two main sections:</h3>
+									</div>
+									<ol class="text-lg list-decimal pr-6 space-y-2 ml-4">
+										<li>All Update Service Status Log: Displays a detailed log of all automatic updates service check statuses. This log includes every time the service status is checked, whether it is running, stopped, or pending, with the time and date recorded for each status. You can use this log to track the service check history and ensure that the program is working as expected<br/>
+											<img src="help-images/all-update-service-status-log.png" style="width: 50%;" />Example of All Update Service Status Log</li>
+										<li>Detected Update Service Running Log: Displays a log specific to automatic updates that were detected as running or attempting to run and successfully stopped later by the program. You can use this log to review cases where the program automatically stopped automatic updates<br/>
+											<img src="help-images/detected-update-service-running-log.png" style="width: 50%;" />Example of Detected Update Service Running Log</li>
+									</ol>
+									
+									<div class="flex items-center mb-2 mt-4">
+										<h3 class="text-xl font-bold text-gray-800 dark:text-white">Log Control Buttons</h3>
+									</div>
+									<p class="text-gray-600 dark:text-gray-300 ml-0 font-bold text-lg">Below each log of automatic update services check logs, there are buttons to control the log:</p>
+									<ol class="text-lg list-decimal pr-6 space-y-2 ml-6">
+										<li>Clear (Delete): To clear the content of the selected log (all statuses log or detected running updates log). When you click on this button, all data in the log will be permanently deleted</li>
+										<li>Exp. to PDF: To export the content of the selected log to a PDF file (Portable Document Format). You can use this feature to save a copy of the log on your device or share it with others</li>
+									</ol>
+									
+									<div class="flex items-center mb-2 mt-4">
+										<h3 class="text-xl font-bold text-gray-800 dark:text-white">Program Functions Control Buttons</h3>
+									</div>
+									<p class="text-gray-600 dark:text-gray-300 ml-0 font-bold text-lg">In the bottom part of the program interface, there are the main control buttons for program functions:</p>
+									<img src="help-images/bottom-buttons-interface.png" style="width: 90%;" />
+									<ul class="text-lg list-decimal pr-6 space-y-2 ml-6">
+										<li>Start Check / Pause Check: A button to start or pause checking the status of update services
+											<ol class="list-disc pr-6 space-y-2 ml-4">
+												<li>When you click on the Start Check button for the first time, the program is run and starts checking the status of automatic update services periodically according to the settings. After clicking it, the button name changes to Pause Check and its color changes to indicate that the check is running<br/>
+													<img src="help-images/pause-button.png" style="width: 17%;" />Pause Check button</li>
+												<li>When you click on the Pause Check button, the program is temporarily stopped from checking the status of automatic update services. You can click on the Start Check button again to resume the check</li>
+											</ol>
+										</li>
+										<li>Auto Start Check: A button to enable or disable automatic checking of the status of automatic update services when the program is opened
+											<ol class="list-disc pr-6 space-y-2 ml-4">
+												<li>When this button is activated (it is checked or lit), the program will automatically start checking the status of automatic update services as soon as it is run</li>
+												<li>When this button is deactivated (unchecked or not lit), the program will not start checking automatically when run, and requires clicking on the Start Check button to start the check</li>
+											</ol>
+										</li>
+										<li>Auto Stop Update: A button to enable or disable automatic stopping of the automatic updates service when it is detected as running
+											<ol class="list-disc pr-6 space-y-2 ml-4">
+												<li>When this button is activated (it is checked or lit), the program will automatically stop the automatic updates service (change status to stopped) as soon as it is detected as running. A notification will also appear telling you about the success or failure of stopping the update service, if alerts are enabled in the settings</li>
+												<li>When this button is deactivated (unchecked or not lit), the program will not stop automatic updates automatically, and will only display the service status in the "Update Status" section</li>
+											</ol>
+										</li>
+										<li>Disable Automatic Update: This button is disabled</li>
+									</ul>
+									<div class="flexa mt-4 items-centera bg-yellow-100 dark:bg-yellow-100/30 border-l-4 border-yellow-400 p-4 mb-0 rounded-r shadow">
+										<div class="flex items-center mb-4">
+											<i data-lucide="alert-triangle" class="w-7 h-7 text-yellow-500 dark:text-yellow-200 mr-3"></i>
+											<p class="text-yellow-600 dark:text-yellow-200 text-xl font-bold">Important Note</p>
+										</div>
+										<ul class="text-lg list-disc pr-6 space-y-2 ml-6 text-justify">
+											<li><span class="font-bold">To Activate Disable Automatic Update:</span> The option to permanently disable updates is activated only through the Settings window and not from the main program interface, in order to protect the user from unintentionally disabling updates and to emphasize the importance of reading warnings and risks before permanently disabling updates</li>
+										</ul>
+									</div>
+								</div>
+								
+								<h2 id="saus" class="text-2xl font-bold text-gray-900 dark:text-white mb-0" style="margin: 0px;">Stopping Automatic Update Services</h2>
+								<div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 text-justify" style="margin-top: -10px;">
+									<div class="flex items-center mb-4">
+										<i data-lucide="monitor-x" class="w-6 h-6 text-red-500 dark:text-red-400 mr-3"></i>
+										<h3 class="text-xl font-semibold text-gray-800 dark:text-white">To temporarily stop running the automatic updates service, do the following:</h3>
+									</div>
+									<ol class="text-lg list-decimal pr-6 space-y-2 ml-4">
+										<li>Open The Program: Run the Windows Updates Stop Program</li>
+											<li>Start Checking: Click on the "Start Check" button to start checking the status of Windows updates services if the check is stopped. You will see the update service status in the "Update Status" section<br/>
+											<img src="help-images/program-interface.png" style="width: 70%;" />Program interface with indication of the Start Check button and Auto Stop Update button</li>
+										<li>Activate Automatic Stop: Click on the "Auto Stop Update" button and check it if it is not already checked</li>
+									</ol>
+									<p class="text-lg text-gray-600 dark:text-gray-300 mt-3"><span class="font-semibold">Automatic Stop When Running:</span> When the "Auto Stop Update" button is activated, the program will stop updates automatically (change status to stopped) as soon as they are detected as running. A notification will also appear telling you about the success or failure of stopping the update service, if alerts are enabled in the program settings</p>
+								</div>
+								
+								<h2 id="dausp" class="text-2xl font-bold text-gray-900 dark:text-white mb-0" style="margin: 0px;">Disabling Automatic Update Services Permanently</h2>
+								<div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 text-justify" style="margin-top: -10px;">
+									<!-- Alert -->
+									<div class="flexa m2-6 items-centera bg-red-100 dark:bg-red-50/30 border-l-4 border-red-400 p-4 mb-8 rounded-r shadow">
+										<div class="flex items-center">
+											<i data-lucide="alert-triangle" class="w-7 h-7 text-red-500 dark:text-red-200 mr-3"></i>
+											<p class="text-red-600 dark:text-red-200 text-xl font-bold">Important Warning</p>
+										</div>
+										<ul class="text-lg list-disc pr-6 space-y-2 ml-6 text-justify">
+											<li><p class="text-lg text-red-600 dark:text-red-200 text-lg mt-2">Disabling Windows Updates permanently can pose serious security risks to your system.</p></li>
+										</ul>
+									</div>
+									<div class="flex items-center mb-4">
+										<i data-lucide="shield-ban" class="w-6 h-6 text-red-500 dark:text-red-400 mr-3"></i>
+										<h3 class="text-xl font-semibold text-gray-800 dark:text-white">To permanently disable running the automatic updates service, follow these steps:</h3>
+									</div>
+									<ol class="text-lg list-decimal pr-6 space-y-2 ml-4">
+										<li>Open The Settings Window: Click on the "
+										<button
+                                                        id="buttonSettings"
+                                                        type="button"
+                                                        class="noCursor pl-3 pr-3 py-0 font-medium text-sm text-center inline-flex items-center text-white bg-primary-800"
+                                                        style="cursor: default; padding-top: 1px; padding-bottom: 1px;"
+                                                    >
+                                                        <svg class="w-3.5 h-3.5 mr-1" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 560 560" style="padding-top: 1px;">
+                                                            <path
+                                                                d="M496.851,212.213l-48.806-12.201c-4.106-14.108-9.722-27.572-16.666-40.205l25.89-43.151 c4.722-7.869,3.482-17.943-3.008-24.432l-34.485-34.485c-6.489-6.49-16.563-7.729-24.432-3.008l-43.151,25.89 c-12.633-6.944-26.097-12.56-40.205-16.666l-12.201-48.805C297.561,6.246,289.562,0,280.384,0h-48.769 c-9.177,0-17.177,6.246-19.403,15.149l-12.201,48.805c-14.108,4.106-27.572,9.722-40.205,16.666l-43.151-25.89 c-7.87-4.722-17.943-3.482-24.432,3.008L57.738,92.223c-6.489,6.489-7.729,16.562-3.008,24.432l25.89,43.151 c-6.944,12.633-12.56,26.097-16.666,40.205l-48.806,12.201C6.246,214.438,0,222.438,0,231.615v48.769 c0,9.177,6.246,17.177,15.149,19.403l48.806,12.201c4.106,14.108,9.722,27.572,16.666,40.205l-25.89,43.151 c-4.722,7.869-3.482,17.943,3.008,24.432l34.485,34.485c6.489,6.49,16.563,7.729,24.432,3.008l43.151-25.89 c12.633,6.944,26.097,12.56,40.205,16.666l12.201,48.805c2.226,8.903,10.225,15.149,19.403,15.149h48.769 c9.177,0,17.177-6.246,19.403-15.149l12.201-48.805c14.108-4.106,27.572-9.722,40.205-16.666l43.151,25.89 c7.87,4.722,17.943,3.482,24.432-3.008l34.485-34.485c6.489-6.489,7.729-16.562,3.008-24.432l-25.89-43.151 c6.944-12.633,12.56-26.097,16.666-40.205l48.806-12.201c8.903-2.226,15.149-10.226,15.149-19.403v-48.769 C512,222.438,505.754,214.438,496.851,212.213z M256,336c-44.112,0-80-35.888-80-80s35.888-80,80-80s80,35.888,80,80 S300.112,336,256,336z"
+                                                            />
+                                                        </svg>
+                                                        <span style="font-size: 10px;">Settings</span>
+                                                    </button>
+													" button at the top of the program interface on the right side, the "Edit Settings" options window will open</li>
+											<li>Go to General Options: Choose the "General Options" tab<br/>
+											<img src="help-images/edit-settings.png" style="width: 70%;" />Settings window and General Options tab</li>
+											<li>Permanent Disable Updates: Go to the bottom of the page and you will find the check box button "Disable Automatic Windows Update Permanently (Not Recommended)" and select it<br/>
+											When click on it, a new window "Windows Update Guidance" will open for you
+											<br/><img src="help-images/windows-update-guidance.png" style="width: 70%;" />Windows Update Guidance window with warnings and tips<br/></li>
+											<li><span class="font-bold">Read Warnings And Guidance:</span> The "Windows Update Guidance" window contains important information, warnings, risks and tips about not disabling Windows updates permanently (disabled). In this window, there are two buttons:<br/>
+												<ul class="list-disc pr-6 space-y-2 ml-6">
+													<li><span class="font-semibold">Cancel</span>: Closes the "Windows Update Guidance" window and displays the "Edit Settings" options window again, without disabling permanent updates</li>
+													<li><span class="font-semibold">Proceed:</span> Initially inactive button. To activate the Proceed button, it is recommended that you read the content of the window, including warnings, risks and tips about not disabling Windows updates permanently disabled</li>
+												</ul>
+											</li>
+											<li>Confirm Reading And Proceed: Click on the check box button "☐ I have read all the warnings and understood the risks of disabling automatic Windows updates permanently". When this box is checked, the "Proceed" button will be activated</li>
+											<li>Disable Updates Permanently: Click on the "Proceed" button after it is activated. The Windows automatic updates services will be permanently disabled (change startup type to Disabled)</li>
+									</ol>
+								</div>
+								
+								<h2 id="program-options" class="text-2xl font-bold text-gray-900 dark:text-white mb-0" style="margin: 0px;">Program Options</h2>
+								<div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 text-justify" style="margin-top: -10px;">
+									<div class="flex items-center mb-4">
+										<i data-lucide="monitor-cog" class="w-6 h-6 text-blue-500 dark:text-blue-400 mr-3"></i>
+										<h3 class="text-xl font-semibold text-gray-800 dark:text-white">Edit Settings Window: The "Edit Settings" options window can be accessed by clicking on the (
+											<button
+                                                        id="buttonSettings"
+                                                        type="button"
+                                                        class="noCursor pl-3 pr-3 py-0 font-medium text-sm text-center inline-flex items-center text-white bg-primary-800"
+                                                        style="cursor: default; padding-top: 1px; padding-bottom: 1px;"
+                                                    >
+                                                        <svg class="w-3.5 h-3.5 mr-1" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 560 560" style="padding-top: 1px;">
+                                                            <path
+                                                                d="M496.851,212.213l-48.806-12.201c-4.106-14.108-9.722-27.572-16.666-40.205l25.89-43.151 c4.722-7.869,3.482-17.943-3.008-24.432l-34.485-34.485c-6.489-6.49-16.563-7.729-24.432-3.008l-43.151,25.89 c-12.633-6.944-26.097-12.56-40.205-16.666l-12.201-48.805C297.561,6.246,289.562,0,280.384,0h-48.769 c-9.177,0-17.177,6.246-19.403,15.149l-12.201,48.805c-14.108,4.106-27.572,9.722-40.205,16.666l-43.151-25.89 c-7.87-4.722-17.943-3.482-24.432,3.008L57.738,92.223c-6.489,6.489-7.729,16.562-3.008,24.432l25.89,43.151 c-6.944,12.633-12.56,26.097-16.666,40.205l-48.806,12.201C6.246,214.438,0,222.438,0,231.615v48.769 c0,9.177,6.246,17.177,15.149,19.403l48.806,12.201c4.106,14.108,9.722,27.572,16.666,40.205l-25.89,43.151 c-4.722,7.869-3.482,17.943,3.008,24.432l34.485,34.485c6.489,6.49,16.563,7.729,24.432,3.008l43.151-25.89 c12.633,6.944,26.097,12.56,40.205,16.666l12.201,48.805c2.226,8.903,10.225,15.149,19.403,15.149h48.769 c9.177,0,17.177-6.246,19.403-15.149l12.201-48.805c14.108-4.106,27.572-9.722,40.205-16.666l43.151,25.89 c7.87,4.722,17.943,3.482,24.432-3.008l34.485-34.485c6.489-6.489,7.729-16.562,3.008-24.432l-25.89-43.151 c6.944-12.633,12.56-26.097,16.666-40.205l48.806-12.201c8.903-2.226,15.149-10.226,15.149-19.403v-48.769 C512,222.438,505.754,214.438,496.851,212.213z M256,336c-44.112,0-80-35.888-80-80s35.888-80,80-80s80,35.888,80,80 S300.112,336,256,336z"
+                                                            />
+                                                        </svg>
+                                                        <span style="font-size: 10px;">Settings</span>
+                                                    </button>
+											) button in the main program interface</h3>
+									</div>
+									<p class="text-gray-600 dark:text-gray-300 ml-0 font-bold text-lg mt-0">This Window Consists of Two Main Tabs: "General Options" and "Program Appearance":</p>
+									<img src="help-images/edit-settings-general-options.png" style="width: 70%;" />Edit Settings - General Options<br/><br/>
+									<ul class="text-lg list-disc pr-6 space-y-2 ml-6">
+										<li><span class="font-semibold">"General Options" Tab:</span> This tab controls the basic options of the program, and includes:
+											<ol class="list-decimal pr-6 space-y-2 ml-4">
+												<li>Check Update Running Every: Allows you to specify the time period during which the status of update services is checked automatically. You can choose from several options, such as 1 second, 5 seconds, 10 seconds, etc. When do you use this option? If you want to check the update status frequently, you can choose a shorter time period. Who is this option useful for? For users who want to monitor the update status accurately and in real time</li>
+												<li>Auto Clear Log List When Reach: Allows you to specify the number of rows that the log list should reach to be automatically cleared. You can choose from several options, such as 250 rows, 500 rows, 1000 rows, etc. When do you use this option? If you use the program for a long time and the event log becomes very large, you can activate this option to clear the log automatically and maintain program performance. Who is this option useful for? For users who use the program continuously and want to manage the size of the event log</li>
+												<li>Program Start on Startup (When Windows Start): Allows you to specify whether the program will be run automatically when the Windows operating system starts. When do you use this option? If you want the program to start checking and monitoring Windows updates automatically as soon as you turn on your computer, you can activate this option. Who is this option useful for? For users who want continuous monitoring of Windows updates without having to run the program manually each time</li>
+												<li>Enable Alert Sounds on Update Running Detected, Connected to Internet and No Internet: Allows you to specify whether alert sounds will be played in different situations: when update running is detected, when connected to the internet, and when not connected to the internet. When do you use these options? If you want to receive sound alerts when certain events related to Windows updates and internet connection status occur, you can activate these options. Who are these options useful for? For users who want to get immediate alerts when update running is detected or the internet connection status changes</li>
+												<li>Disable Automatic Windows Update Permanently (Not Recommended): Allows you to disable Windows automatic updates permanently. Warning: This option is not recommended for ordinary users because it may expose your system to danger. It is only recommended for advanced users who understand the potential risks and take alternative security precautions. Who is this option useful for? For advanced users only who have a full understanding of the potential security risks of permanently disabling updates and take alternative security precautions</li>
+											</ol>
+										</li>
+										<li><span class="font-semibold">"Program Appearance" Tab:</span> This tab controls the appearance of the program and the user interface, and includes:<br/>
+										<img src="help-images/edit-settings-program-appearance.png" style="width: 70%;" />Edit Settings - Program Appearance<br/><br/>
+											<ol class="list-decimal pr-6 space-y-2 ml-4">
+												<li>Status Style - Number in Bottom: Allows you to specify whether the update status number will be displayed in the lower part of the status icon in the main program interface</li>
+												<li>Status Style - Number in Top: Allows you to specify whether the update status number will be displayed in the upper part of the status icon in the main program interface</li>
+												<li>Animation File 1: Allows you to specify an animated image file (GIF) to be displayed during the check in the main program interface to the left of "Checking Status"</li>
+												<li>Animation File 2: Allows you to specify a second animated image file (GIF) to be displayed during the check in the main program interface to the left of "Checking Status"</li>
+												<li>Enable Congrats GIF When Automatic Windows Update Stops: Allows you to specify whether a congratulatory GIF image will be displayed when the automatic Windows update is successfully stopped by the program. You can activate this option to add a fun touch when stopping updates</li>
+											</ol>
+										</li>
+									</ul>
+									<div class="flex items-center mt-6 mb-4">
+										<i data-lucide="save" class="w-6 h-6 text-blue-500 dark:text-blue-400 mr-3"></i>
+										<h3 class="text-xl font-semibold text-gray-800 dark:text-white">Save Changes</h3>
+									</div>
+									<ul class="list-disc pr-6 space-y-2 ml-6">
+										<li>
+											<p class="text-gray-600 dark:text-gray-300 ml-0 text-lg mt-2">The program will automatically saves changes when you modify the options in the selected tab, activate or deactivate check boxes, choose values from drop-down menus, specify image or animation files, and other available options according to your preferences and will inform you with notification message</p>
+										</li>
+									</ul>
+								</div>
+								
+								<!-- Alert -->
+								<div class="flexa mt-4 items-centera bg-yellow-100 dark:bg-yellow-100/30 border-l-4 border-yellow-400 p-4 mb-0 rounded-r shadow">
+									<div class="flex items-center mb-4">
+										<i data-lucide="alert-triangle" class="w-7 h-7 text-yellow-500 dark:text-yellow-200 mr-3"></i>
+										<p id="important-notes" class="text-yellow-600 dark:text-yellow-200 text-xl font-bold">Important Notes</p>
+									</div>
+									<ul class="text-lg list-disc pr-6 space-y-2 ml-6 text-justify">
+										<li><span class="font-bold">Run as Administrator:</span> Make sure that you have run the program as administrator to be able to control Windows updates services correctly. To run the program as administrator, right-click on the program icon and choose "Run as administrator".</li>
+										<li><span class="font-bold">Technical Support:</span> If you encounter any problems while using the program or have any questions or inquiries, do not hesitate to refer to the help page (by clicking on the "Help (?)" button in the main program interface) or contact technical support for assistance.</li>
+									</ul>
+								</div>
+								
+							</div>
+						</section>
+						
+						<!-- Alternatives Section -->
+						<!--
+						<section>
+							<h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Better Alternatives</h2>
+							<div class="grid gap-6 md:grid-cols-2">
+								<div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+									<div class="flex items-center mb-4">
+										<i data-lucide="clock" class="w-6 h-6 text-blue-500 dark:text-blue-400 mr-3"></i>
+										<h3 class="text-xl font-semibold text-gray-800 dark:text-white">Delay Updates</h3>
+									</div>
+									<p class="text-gray-600 dark:text-gray-300 ml-8">Postpone updates for a few weeks until any known issues are resolved.</p>
+								</div>
+
+								<div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+									<div class="flex items-center mb-4">
+										<i data-lucide="settings" class="w-6 h-6 text-blue-500 dark:text-blue-400 mr-3"></i>
+										<h3 class="text-xl font-semibold text-gray-800 dark:text-white">Set Active Hours</h3>
+									</div>
+									<p class="text-gray-600 dark:text-gray-300 ml-8">Specify when you use your device to prevent update interruptions.</p>
+								</div>
+
+								<div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+									<div class="flex items-center mb-4">
+										<i data-lucide="refresh-cw" class="w-6 h-6 text-blue-500 dark:text-blue-400 mr-3"></i>
+										<h3 class="text-xl font-semibold text-gray-800 dark:text-white">Manual Updates</h3>
+									</div>
+									<p class="text-gray-600 dark:text-gray-300 ml-8">Install updates on your own schedule for better control.</p>
+									</div>
+
+								<div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+									<div class="flex items-center mb-4">
+										<i data-lucide="check-circle-2" class="w-6 h-6 text-blue-500 dark:text-blue-400 mr-3"></i>
+										<h3 class="text-xl font-semibold text-gray-800 dark:text-white">System Optimization</h3>
+									</div>
+									<p class="text-gray-600 dark:text-gray-300 ml-8">Use performance tools to improve update installation speed.</p>
+								</div>
+							</div>
+						</section>
+						-->
+						
+					</div>
+				
+            </div>
+                <div class="flex-1 h-full overflow-x-hidden overflow-y-auto hidden">
+                    <div class="w-full">
+                        <div id="iHeader" class="row bg-primary-100 dark:bg-primary-1600">
+                            <div style="display: flex; justify-content: space-between; align-items: right; padding: 0px;">
+                                <div></div>
+                                <div style="background-color2: black; padding: 0px; display: none; justify-content: space-between; align-items: center;">
+                                    <table>
+                                        <tr>
+                                            <td>
+                                                <nav id="mustButtons" aria-label="Secondary" class="flex items-center">
+                                                    <!-- Toggle dark theme button -->
+                                                    <!-- p-2 transition-colors duration-200 rounded-full text-primary-500 bg-primary-500 hover:text-primary hover:bg-primary-100 dark:hover:text-400 dark:hover:bg-primary-600 dark:bg-600 focus:outline-none focus:bg-primary-100 dark:focus:bg-primary-600 focus:ring-primary-700 -->
+                                                    <!-- Settings button -->
+
+                                                    <button id="buttonTheme" aria-hidden="true" class="noCursor relative focus:outline-none" x-cloak @click="toggleTheme" style="padding-top: 5px; padding-bottom: 5px;">
+                                                        <div
+                                                            class="w-11 h-5 transition rounded-full outline-none bg-gray-200 dark:bg-purple-400 border dark:border-gray-500 border-slate-300"
+                                                            style="margin-right: 5px; margin-top: 0px;"
+                                                        ></div>
+                                                        <!-- 
+                                                    														   <input id="startcheckwhenopencheckbox" type="checkbox" class="peer appearance-none w-11 h-5 bg-slate-200 rounded-full border dark:bg-gray-700 dark:border-slate-900 border-gray-300 dark:checked:border-gray-500 dark:checked:bg-purple-600  checked:border-gray-400 checked:bg-primary-800 transition-colors duration-300" />
+                                                    															<label for="startcheckwhenopencheckbox" class="absolute top-0 left-0 w-5 h-5 dark:bg-gray-600 bg-white rounded-full border dark:peer-checked:bg-purple-300 dark:peer-checked:border-purple-700 peer-checked:border-blue-500 dark:border-slate-800 border-slate-300 shadow-sm transition-transform duration-300 peer-checked:translate-x-6 ">
+                                                    														   absolute top-0 left-0 w-5 h-5 dark:bg-gray-600 bg-white rounded-full border dark:peer-checked:bg-purple-300 dark:peer-checked:border-purple-700 peer-checked:border-blue-500 dark:border-slate-800 border-slate-300 shadow-sm transition-transform duration-300 peer-checked:translate-x-6 -->
+                                                        <div
+                                                            class="absolute top-1s left-0 inline-flex items-center justify-center w-5 h-5 border dark:border-gray-500 border-slate-300 transition-all duration-300 transform scale-110 rounded-full shadow-sm"
+                                                            style2="margin-top: 8px;"
+                                                            :class="{ 'translate-x-0 -translate-y-px  text-gray-500 bg-gray-100 lightdiv': !isDark, 'translate-x-6 text-rose-100 bg-purple-500 border-gray-500 darkdiv': isDark }"
+                                                        >
+                                                            <svg x-show="!isDark" id="buttonLiteDark-dark-icon" class="w-5 h-5" style="margin-top: 4px; margin-left: 1.2px;" fill="currentColor" viewBox="0 0 130 130">
+                                                                <path
+                                                                    d="M96.371,59.349a3.2,3.2,0,0,0-3.946.618,37.08,37.08,0,1,1-52.387-52.4,3.211,3.211,0,0,0-3.1-5.435,49.321,49.321,0,0,0-25.049,17.4A48.952,48.952,0,0,0,50.952,98a48.519,48.519,0,0,0,29.512-9.895A49.361,49.361,0,0,0,97.869,63.05,3.2,3.2,0,0,0,96.371,59.349Z"
+                                                                />
+                                                                <path
+                                                                    d="M43.282,34.257,52.876,41.2,49.2,52.449a3.714,3.714,0,0,0,5.716,4.159l9.565-6.979,9.573,6.984a3.714,3.714,0,0,0,5.709-4.162L76.083,41.2l9.595-6.944a3.714,3.714,0,0,0-2.19-6.721l-11.834.023L68.017,16.293l0-.009a3.716,3.716,0,0,0-7.072.009L57.305,27.558l-11.838-.023a3.714,3.714,0,0,0-2.185,6.722Z"
+                                                                />
+                                                            </svg>
+                                                            <svg x-show="isDark" id="buttonLiteDark-light-icon" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" style="margin-top: 4px; padding: 1px;" viewBox="0 0 95 120" fill="currentColor" x="0px" y="0px">
+                                                                <path
+                                                                    fill-rule="evenodd"
+                                                                    clip-rule="evenodd"
+                                                                    d="M46 9C46 6.79086 47.7909 5 50 5C52.2091 5 54 6.79086 54 9V19C54 21.2091 52.2091 23 50 23C47.7909 23 46 21.2091 46 19V9ZM70 50C70 61.0457 61.0457 70 50 70C38.9543 70 30 61.0457 30 50C30 38.9543 38.9543 30 50 30C61.0457 30 70 38.9543 70 50ZM81.8198 18.18C80.2577 16.6179 77.725 16.6179 76.1629 18.18L69.0918 25.2511C67.5297 26.8132 67.5297 29.3458 69.0918 30.9079C70.6539 32.47 73.1866 32.47 74.7487 30.9079L81.8198 23.8368C83.3819 22.2747 83.3819 19.7421 81.8198 18.18ZM91 46C93.2091 46 95 47.7909 95 50C95 52.2091 93.2091 54 91 54H81C78.7909 54 77 52.2091 77 50C77 47.7909 78.7909 46 81 46H91ZM81.8198 81.8196C83.3819 80.2575 83.3819 77.7249 81.8198 76.1628L74.7487 69.0917C73.1866 67.5296 70.6539 67.5296 69.0918 69.0917C67.5297 70.6538 67.5297 73.1865 69.0918 74.7486L76.1629 81.8196C77.725 83.3817 80.2577 83.3817 81.8198 81.8196ZM46 81C46 78.7909 47.7909 77 50 77C52.2091 77 54 78.7909 54 81V91C54 93.2091 52.2091 95 50 95C47.7909 95 46 93.2091 46 91V81ZM30.9081 69.0921C29.346 67.53 26.8134 67.53 25.2513 69.0921L18.1802 76.1632C16.6181 77.7253 16.6181 80.2579 18.1802 81.82C19.7423 83.3821 22.275 83.3821 23.8371 81.82L30.9081 74.749C32.4702 73.1869 32.4702 70.6542 30.9081 69.0921ZM19 46C21.2091 46 23 47.7909 23 50C23 52.2091 21.2091 54 19 54H9C6.79086 54 5 52.2091 5 50C5 47.7909 6.79086 46 9 46H19ZM30.9081 30.908C32.4702 29.3459 32.4702 26.8133 30.9081 25.2512L23.8371 18.1801C22.275 16.618 19.7423 16.618 18.1802 18.1801C16.6181 19.7422 16.6181 22.2749 18.1802 23.8369L25.2513 30.908C26.8134 32.4701 29.346 32.4701 30.9081 30.908Z"
+                                                                />
+                                                            </svg>
+                                                        </div>
+                                                    </button>
+                                                    <button
+                                                        id="buttonColoredLite"
+                                                        type="button"
+                                                        class="interactive-element noCursor pl-4 pr-4 py-1 font-medium text-sm text-center inline-flex items-center dark:bg-primary-1600 dark:text-gray-200 dark:hover:text-gray-200 dark:hover:bg-[#6B7280] hover:text-gray-800 text-primary-1600 hover:bg-primary-1200 bg-primary-100 focus:outline-none rounded-sm"
+                                                        style="--active-bg: var(--color-primary-007); --active-bg-dark: var(--color-[#9CA3AF]); padding-top: 5px; padding-bottom: 5px;"
+                                                    >
+                                                        <svg id="buttonColored-icon" class="hidden w-7 h-5" viewBox="0 0 16.00 16.00" xmlns="http://www.w3.org/2000/svg" fill="#A955F7">
+                                                            <g id="SVGRepo_bgCarrier" stroke-width="0" />
+                                                            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" stroke="#CCCCCC" stroke-width="0.096" />
+                                                            <g id="SVGRepo_iconCarrier">
+                                                                <path d="M10.5 10.5c.002 2.762-2.237 5-5 5s-5.002-2.238-5-5c-.002-2.76 2.237-5 5-5s5.002 2.24 5 5z" color="#000000" fill="#ff15a1" stroke="#373737" stroke-width="0.144" />
+                                                                <path d="M8 1.401a4.998 4.998 0 0 0-2.488 9.334c-.004-.078-.012-.155-.012-.234a4.998 4.998 0 0 1 7.488-4.334A4.994 4.994 0 0 0 8 1.4z" fill="#1583ff" />
+                                                                <path d="M10.5 5.5a4.998 4.998 0 0 0-5 5c0 .08.008.157.012.235A4.998 4.998 0 0 0 13 6.401c0-.079-.008-.156-.012-.234A4.975 4.975 0 0 0 10.5 5.5z" fill="#00cf2d" />
+                                                                <path d="M12.988 6.167c.004.078.012.155.012.234a4.998 4.998 0 0 1-7.489 4.334 4.994 4.994 0 0 0 4.989 4.766 4.998 4.998 0 0 0 2.488-9.334z" fill="#f8ff15" />
+                                                                <path d="M5.512 10.735a4.996 4.996 0 0 0 2.486 4.093 4.987 4.987 0 0 0 2.49-4.091A4.978 4.978 0 0 1 8 11.4a4.975 4.975 0 0 1-2.488-.666z" fill="#ef0000" />
+                                                                <path d="M7.998 6.173A4.991 4.991 0 0 0 5.5 10.5c0 .079.008.156.012.234a4.978 4.978 0 0 0 4.977.002c.003-.079.011-.157.011-.236a4.99 4.99 0 0 0-2.502-4.328z" fill="#383027" />
+                                                                <path
+                                                                    d="M5.5 5.5c-.91 0-1.76.247-2.494.67a4.99 4.99 0 0 0 2.506 4.564c-.004-.077-.012-.154-.012-.233a4.991 4.991 0 0 1 2.498-4.328A4.975 4.975 0 0 0 5.5 5.5z"
+                                                                    fill="#5100cc"
+                                                                />
+                                                                <path
+                                                                    d="M8 1.401a4.998 4.998 0 0 0-4.994 4.77 4.998 4.998 0 1 0 4.992 8.658 4.998 4.998 0 1 0 4.99-8.662A4.994 4.994 0 0 0 8 1.4z"
+                                                                    fill="none"
+                                                                    stroke="#373737"
+                                                                    stroke-width="0.144"
+                                                                />
+                                                            </g>
+                                                        </svg>
+                                                        <svg id="buttonLite-icon" class="hidden w-7 h-5" viewBox="0 0 24 24" fill="#ffffff" xmlns="http://www.w3.org/2000/svg">
+                                                            <g id="SVGRepo_bgCarrier" stroke-width="0" />
+                                                            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" />
+                                                            <g id="SVGRepo_iconCarrier">
+                                                                <circle cx="12" cy="12" r="9" stroke="#6B7280" stroke-width="2" />
+                                                                <path
+                                                                    d="M18.364 5.63604C16.6761 3.94821 14.3869 3 12 3C9.61305 3 7.32387 3.94821 5.63604 5.63604C3.94821 7.32387 3 9.61305 3 12C3 14.3869 3.94821 16.6761 5.63604 18.364L12 12L18.364 5.63604Z"
+                                                                    fill2="#6B7280"
+                                                                    class="dark:fill-semiblack fill-gray-500"
+                                                                />
+                                                            </g>
+                                                        </svg>
+                                                    </button>
+                                                    <button
+                                                        id="buttonHelp"
+                                                        type="button"
+                                                        class="interactive-element noCursor pl-2 pr-4 py-1 font-medium text-sm text-center inline-flex items-center dark:bg-primary-880 dark:text-gray-200 dark:hover:text-gray-200 dark:hover:bg-primary-888 hover:text-primary-600 text-primary-440 border2 border-slate-300 hover:bg-primary-444 bg-primary-707 focus:outline-none rounded-sm"
+                                                        style="
+                                                            cursor: default;
+                                                            height: 30px;
+                                                            margin-left: 0.9px;
+                                                            margin-right: 0.9px;
+                                                            --active-bg: var(--color-primary-222);
+                                                            --active-bg-dark: var(--color-primary-808);
+                                                            padding-top: 5px;
+                                                            padding-bottom: 5px;
+                                                        "
+                                                    >
+                                                        <svg class="w-7 h-5" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                                                            <path
+                                                                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"
+                                                            />
+                                                        </svg>
+                                                        <span class="font-semibold">Help</span>
+                                                    </button>
+                                                    <button
+                                                        id="buttonSettings"
+                                                        type="button"
+                                                        class="interactive-element noCursor pl-3 pr-4 py-1 font-medium text-sm text-center inline-flex items-center dark:text-gray-100 dark:hover:text-gray-200 dark:bg-primary-990 dark:hover:bg-primary-999 hover:text-primary-200 text-primary-220 hover:bg-primary-900 bg-primary-800 focus:outline-none rounded-sm"
+                                                        style="cursor: default; margin-right: 0.17px; --active-bg: var(--color-primary-700); --active-bg-dark: var(--color-primary-770); padding-top: 5px; padding-bottom: 5px;"
+                                                    >
+                                                        <svg class="w-7 h-5" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 560 560" style="padding-top: 2px;">
+                                                            <path
+                                                                d="M496.851,212.213l-48.806-12.201c-4.106-14.108-9.722-27.572-16.666-40.205l25.89-43.151 c4.722-7.869,3.482-17.943-3.008-24.432l-34.485-34.485c-6.489-6.49-16.563-7.729-24.432-3.008l-43.151,25.89 c-12.633-6.944-26.097-12.56-40.205-16.666l-12.201-48.805C297.561,6.246,289.562,0,280.384,0h-48.769 c-9.177,0-17.177,6.246-19.403,15.149l-12.201,48.805c-14.108,4.106-27.572,9.722-40.205,16.666l-43.151-25.89 c-7.87-4.722-17.943-3.482-24.432,3.008L57.738,92.223c-6.489,6.489-7.729,16.562-3.008,24.432l25.89,43.151 c-6.944,12.633-12.56,26.097-16.666,40.205l-48.806,12.201C6.246,214.438,0,222.438,0,231.615v48.769 c0,9.177,6.246,17.177,15.149,19.403l48.806,12.201c4.106,14.108,9.722,27.572,16.666,40.205l-25.89,43.151 c-4.722,7.869-3.482,17.943,3.008,24.432l34.485,34.485c6.489,6.49,16.563,7.729,24.432,3.008l43.151-25.89 c12.633,6.944,26.097,12.56,40.205,16.666l12.201,48.805c2.226,8.903,10.225,15.149,19.403,15.149h48.769 c9.177,0,17.177-6.246,19.403-15.149l12.201-48.805c14.108-4.106,27.572-9.722,40.205-16.666l43.151,25.89 c7.87,4.722,17.943,3.482,24.432-3.008l34.485-34.485c6.489-6.489,7.729-16.562,3.008-24.432l-25.89-43.151 c6.944-12.633,12.56-26.097,16.666-40.205l48.806-12.201c8.903-2.226,15.149-10.226,15.149-19.403v-48.769 C512,222.438,505.754,214.438,496.851,212.213z M256,336c-44.112,0-80-35.888-80-80s35.888-80,80-80s80,35.888,80,80 S300.112,336,256,336z"
+                                                            />
+                                                        </svg>
+                                                        <span class="font-semibold">Settings</span>
+                                                    </button>
+                                                    <button
+                                                        id="buttonMinimize"
+                                                        type="button"
+                                                        class="interactive-element noCursor pl-5 pr-5 py-1 font-medium text-sm text-center inline-flex items-center dark:text-gray-100 dark:hover:text-gray-200 dark:bg-primary-990 dark:hover:bg-primary-999 hover:text-primary-200 text-primary-220 hover:bg-primary-900 bg-primary-800 focus:outline-none rounded-sm"
+                                                        style="cursor: default; margin-right: 0.9px; --active-bg: var(--color-primary-700); --active-bg-dark: var(--color-primary-770); padding-top: 5px; padding-bottom: 5px;"
+                                                    >
+                                                        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14" />
+                                                        </svg>
+                                                    </button>
+                                                    <button
+                                                        id="buttonClose2"
+                                                        type="button"
+                                                        class="noCursor pl-5 pr-6 py-1 font-medium text-sm text-center inline-flex items-center dark:text-white dark:hover:text-white dark:active:bg-red-400 dark:bg-red-700 active:bg-red-400 dark:hover:bg-[var(--red2-2)] hover:text-white text-white bg-primary-400 hover:bg-primary-500 focus:outline-none rounded-sm"
+                                                        style="cursor: default; padding-top: 5px; padding-bottom: 5px;"
+                                                    >
+                                                        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 17.94 6M18 18 6.06 6" />
+                                                        </svg>
+                                                    </button>
+                                                </nav>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                            <!-- /.col -->
+                        </div>
+                        <!-- Desktop navbar -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- All javascript code in this project for now is just for demo DON'T RELY ON IT  -->
+        <!--Datatables -->
+        <script>
+		
+		// دالة:  - تمرير سلس إلى قسم مستهدف عند النقر على رابط بعنوان target وليس href، لذلك قم بتغيير href الى traget لتفعيلها
+		// دالة: scrollToTarget - تمرير سلس إلى قسم مستهدف عند النقر على رابط بناءً على خاصية 'target'
+		//         يجب إضافة خاصية 'target' إلى الرابط لتفعيل التمرير، وقيمة 'href' تستخدم فقط لمنع الانتقال للصفحة.
+		function scrollToTarget(event) {
+		  event.preventDefault(); // منع السلوك الافتراضي للرابط (تغيير الرابط في المتصفح)
+		  // السلوك الافتراضي للرابط هو الانتقال إلى عنوان URL المحدد في 'href'.
+		  // هنا، نمنع هذا السلوك لأننا نريد فقط التمرير داخل نفس الصفحة.
+
+		  const targetSelector = this.getAttribute('target'); // الحصول على قيمة target من الرابط
+		  // 'this' في هذا السياق يشير إلى عنصر الرابط (<a>) الذي تم النقر عليه.
+		  // getAttribute('target') تستخرج قيمة الخاصية 'target' من الرابط.
+		  // على سبيل المثال، إذا كان الرابط <a target="#section1">، فإن قيمة targetSelector ستكون "#section1".
+
+		  if (targetSelector) { // التحقق من وجود قيمة لـ targetSelector (أي هل الرابط لديه خاصية target؟)
+			const targetElement = document.querySelector(targetSelector); // البحث عن العنصر الهدف في الصفحة
+			// document.querySelector(targetSelector) يستخدم محدد CSS (قيمة targetSelector)
+			// للبحث عن أول عنصر يطابق هذا المحدد في وثيقة HTML الحالية.
+			// على سبيل المثال، إذا كانت قيمة targetSelector هي "#section1"، فسيبحث عن العنصر الذي لديه id="section1".
+
+			if (targetElement) { // التحقق من العثور على العنصر الهدف (هل تم إيجاد عنصر بالمعرف المحدد؟)
+			  targetElement.scrollIntoView({ // تمرير الصفحة لعرض العنصر الهدف
+				behavior: 'smooth' // لجعل التمرير سلسًا (اختياري)
+				// الخاصية 'behavior: 'smooth'' تجعل التمرير يتم بشكل سلس وبطيء بدلاً من القفز الفوري.
+				// إذا أردت تمريرًا فوريًا، يمكنك حذف هذا الجزء أو استخدام 'behavior: "instant"'.
+			  });
+			} else { // في حالة عدم العثور على العنصر الهدف
+			  console.warn('العنصر الهدف "' + targetSelector + '" غير موجود.');
+			  // عرض تحذير في وحدة تحكم المتصفح (Console) لإعلام المطور بأن العنصر الهدف غير موجود.
+			  // هذا يساعد في تصحيح الأخطاء إذا كان هناك خطأ في كتابة اسم المعرف أو إذا كان العنصر مفقودًا.
+			}
+		  } else { // في حالة عدم وجود خاصية target في الرابط
+			console.warn('الرابط لا يحتوي على خاصية target.');
+			// عرض تحذير في وحدة تحكم المتصفح لإعلام المطور بأن الرابط لا يحتوي على الخاصية 'target' المطلوبة.
+			// هذا يساعد في تذكير المطور بضرورة إضافة الخاصية 'target' للروابط التي تريد التمرير عند النقر عليها.
+		  }
+		}
+
+		// ربط الدالة بجميع الروابط التي تريد تطبيق هذا السلوك عليها
+		const links = document.querySelectorAll('a[target^="#"]'); // تحديد الروابط التي لها target يبدأ بـ # (رابط داخلي)
+		// document.querySelectorAll('a[target^="#"]') يستخدم محدد CSS لتحديد جميع عناصر <a> (الروابط)
+		// التي لديها الخاصية 'target' وقيمة هذه الخاصية تبدأ بالرمز '#'.
+		// 'a[target^="#"]' هو محدد CSS:
+		//   'a':  يحدد عناصر <a> (الروابط).
+		//   '[target^="#"]': يفلتر الروابط فقط التي لها الخاصية 'target' والتي تبدأ قيمتها بالرمز '#'.
+		//                   علامة '^=' تعني "يبدأ بـ".  هذا يحدد الروابط الداخلية التي تستهدف أقسامًا في نفس الصفحة.
+		// يتم تخزين قائمة بجميع الروابط المحددة في المتغير 'links' (وهو عبارة عن NodeList - قائمة تشبه المصفوفة).
+
+		links.forEach(link => { // التكرار على كل رابط تم تحديده في قائمة 'links'
+		  link.addEventListener('click', scrollToTarget); // إضافة مستمع حدث النقر لكل رابط
+		  // forEach() هي طريقة لتكرار عناصر المصفوفة (أو NodeList في هذه الحالة).
+		  // لكل 'link' في قائمة 'links'، يتم تنفيذ الدالة الموجودة داخل forEach.
+		  // link.addEventListener('click', scrollToTarget):
+		  //   link: العنصر الحالي (الرابط) الذي يتم التكرار عليه.
+		  //   addEventListener('click', scrollToTarget):  تضيف مستمع حدث 'click' إلى الرابط الحالي.
+		  //   'click':  هو نوع الحدث الذي نستمع إليه (حدث النقر بالماوس).
+		  //   scrollToTarget: هي الدالة التي سيتم استدعاؤها عند وقوع حدث 'click' على الرابط.
+		  //                    (الدالة التي قمنا بتعريفها في بداية الكود لعملية التمرير).
+		});
+		
+		// Enhanced scroll spy and active link management
+      function updateActiveLink() {
+        const sections = document.querySelectorAll('section[id]');
+        const scrollPosition = window.scrollY + 100; // Offset for better accuracy
+
+        sections.forEach(section => {
+          const sectionTop = section.offsetTop;
+          const sectionHeight = section.offsetHeight;
+          const sectionId = section.getAttribute('id');
+          const link = document.querySelector(`a[target="#${sectionId}"]`);
+
+          if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+            // Remove active class from all links
+            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+            // Add active class to current section's link
+            if (link) link.classList.add('active');
+          }
+        });
+      }
+
+      // Smooth scrolling with active state management
+      document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const targetId = link.getAttribute('target');
+          const targetSection = document.querySelector(targetId);
+
+          if (targetSection) {
+            targetSection.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start'
+            });
+
+            // Update active state
+            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+            link.classList.add('active');
+          }
+        });
+      });
+
+      // Listen for scroll events
+      window.addEventListener('scroll', updateActiveLink);
+      // Initial check for active section
+      document.addEventListener('DOMContentLoaded', updateActiveLink);
+		
+		const currentThemes = JSON.parse(window.localStorage.getItem("dark")) || false; // الوضع الحالي
+					const loadingElement = document.getElementById('loadings');
+					
+					if(currentThemes) {
+						//alert(currentThemes);
+						loadingElement.classList.remove('bg-[#E1EAF1]'); // هذا هو الصنف الذي يُعطي اللون الأصلي
+						loadingElement.classList.remove('text-gray-500'); // هذا هو الصنف الذي يُعطي اللون الأصلي
+						loadingElement.classList.add('bg-[#232F3F]'); // يمكنك تغيير 'red' إلى أي لون آخر
+						loadingElement.classList.add('text-[#57C3EA]'); // يمكنك تغيير 'red' إلى أي لون آخر
+					} else {
+						//loadingElement.classList.remove('bg-[#E1EAF1]'); // هذا هو الصنف الذي يُعطي اللون الأصلي
+						//loadingElement.classList.remove('text-gray-500'); // هذا هو الصنف الذي يُعطي اللون الأصلي
+						loadingElement.classList.add('bg-[#FFF0F5]'); // يمكنك تغيير 'red' إلى أي لون آخر
+						//loadingElement.classList.add('text-[#57C3EA]'); // يمكنك تغيير 'red' إلى أي لون آخر
+					}
+		
+			lucide.createIcons();
+			
+			// المتغير الذي يتحكم في إمكانية المتابعة
+					  let canProceed = false;
+
+					  // عند تغيير حالة checkbox، نقوم بتحديث المتغير ومظهر الزر
+					  function toggleProceedButton(isChecked) {
+						canProceed = isChecked;
+						const proceedButton = document.getElementById('proceed');
+						if (canProceed) {
+						  // إزالة النمط "المعطل" ليظهر الزر نشطاً
+						  proceedButton.classList.remove('opacity-50', 'cursor-not-allowed');
+						} else {
+						  // إضافة النمط "المعطل" ليظهر الزر معطلاً
+						  proceedButton.classList.add('opacity-50', 'cursor-not-allowed');
+						}
+					  }
+
+					  // عند النقر على الزر، يتم التحقق مما إذا كان يمكن المتابعة أم لا
+					  function handleProceed() {
+						if (!canProceed) {
+						  //alert("يرجى قراءة النصائح والموافقة على الشروط قبل المتابعة.");
+						  sendMessage("reply.gwu", 'canProceed', 'no');
+						  return;
+						}
+						// هنا يتم تنفيذ الإجراء المطلوب عند السماح بالمتابعة
+						//alert("تم المتابعة!");
+						sendMessage("reply.gwu", 'canProceed', 'yes');
+					  }
+					  
+					  // دالة مُوحّدة لإرسال الرسائل مع معالجة الأخطاء
+						function sendMessage(eventType, targetId, message) { // قيمة افتراضية للرسالة
+							try {
+								const messageObject = {
+									type: eventType,
+									target: targetId,
+									jmessage: message // إضافة الرسالة الاختيارية
+								};
+								console.log(JSON.stringify(messageObject, null, 2)); // طباعة JSON للتأكد من صحته
+								window.chrome.webview.postMessage(JSON.stringify(messageObject));
+							} catch (error) {
+								console.error("خطأ في إرسال الرسالة:", error);
+							}
+						}
+
+            const themeToggleColorBtn = document.getElementById("buttonColoredLite");
+            themeToggleColorBtn.addEventListener("click", function () {
+                /*
+         	let cColor = localStorage.getItem('color');
+         	if (!cColor || (cColor !== 'colored' && cColor !== 'lite')) {
+         		cColor = 'colored'; // Set a default value if not found
+         	}
+         	setColors(cColor === 'lite' ? 'colored' : 'lite');
+         	*/
+
+                // toggle icons inside button
+                const cColor = localStorage.getItem("color");
+                //window.localStorage.setItem('color', color)
+                //alert(cColor);
+                if (cColor != "colored" && cColor != "lite") {
+                    //alert('new color: colored');
+                    setColors("colored");
+                } else {
+                    if (cColor == "lite") {
+                        //alert('color: colored');
+                        setColors("colored");
+                    } else if (cColor == "colored") {
+                        //alert('color: lite');
+                        setColors("lite");
+                    }
+                }
+            });
+
+            //setColors('colored'); - setColors('lite');
+            const setColors = (color) => {
+                //alert(color);
+                const themeToggleColoredIcon = document.getElementById("buttonColored-icon");
+                const themeToggleNormalIcon = document.getElementById("buttonLite-icon");
+                const iHeaderDiv = document.getElementById("iHeader");
+                const listViewAllDiv = document.getElementById("listViewAllDiv"); // Replace with your element's ID
+
+                if (themeToggleColoredIcon && themeToggleNormalIcon) {
+                    // Check if elements exist
+                    if (color == "colored") {
+                        themeToggleNormalIcon.classList.remove("hidden");
+                        themeToggleColoredIcon.classList.add("hidden");
+                        //themeToggleNormalIcon.classList.toggle('hidden', color === 'colored');
+                        //themeToggleColoredIcon.classList.toggle('hidden', color === 'lite');
+                    } else if (color == "lite") {
+                        themeToggleColoredIcon.classList.remove("hidden");
+                        themeToggleNormalIcon.classList.add("hidden");
+                        //themeToggleNormalIcon.classList.toggle('hidden', color === 'colored');
+                        //themeToggleColoredIcon.classList.toggle('hidden', color === 'lite');
+                    }
+                } else {
+                    console.error("One or both icon elements not found!");
+                }
+
+                if (themeToggleButton) {
+                    themeToggleButton.addEventListener("click", toggleTheme);
+                }
+
+                let isDark = window.localStorage.getItem("dark");
+
+                // التحقق من وجود القيمة وتحويلها إلى قيمة منطقية
+                if (isDark !== null) {
+                    isDark = JSON.parse(isDark);
+                } else {
+                    isDark = false; // قيمة افتراضية إذا لم تكن موجودة
+                }
+
+                //alert(color + ' - ' + isDark); // الآن يتم عرض قيمة منطقية
+
+                //toggleShadow(color, isDark);
+
+                const root = document.documentElement;
+                root.style.setProperty("--color-primary-000", `var(--color-${color}-000)`); // primary-000
+				root.style.setProperty("--color-primary-100", `var(--color-${color}-100)`); // primary-100
+				root.style.setProperty("--color-primary-200", `var(--color-${color}-200)`); // primary-200
+				root.style.setProperty("--color-primary-220", `var(--color-${color}-220)`); // primary-220
+				root.style.setProperty("--color-primary-222", `var(--color-${color}-222)`); // primary-222
+				root.style.setProperty("--color-primary-202", `var(--color-${color}-202)`); // primary-202
+				root.style.setProperty("--color-primary-002", `var(--color-${color}-002)`); // primary-002
+				root.style.setProperty("--color-primary-300", `var(--color-${color}-300)`); // primary-300
+				root.style.setProperty("--color-primary-400", `var(--color-${color}-400)`); // primary-400
+				root.style.setProperty("--color-primary-440", `var(--color-${color}-440)`); // primary-440
+				root.style.setProperty("--color-primary-444", `var(--color-${color}-444)`); // primary-444
+				root.style.setProperty("--color-primary-404", `var(--color-${color}-404)`); // primary-404
+				root.style.setProperty("--color-primary-500", `var(--color-${color}-500)`); // primary-500
+				root.style.setProperty("--color-primary-600", `var(--color-${color}-600)`); // primary-600
+				root.style.setProperty("--color-primary-700", `var(--color-${color}-700)`); // primary-700
+				root.style.setProperty("--color-primary-770", `var(--color-${color}-770)`); // primary-770
+				root.style.setProperty("--color-primary-007", `var(--color-${color}-007)`); // primary-007
+				root.style.setProperty("--color-primary-707", `var(--color-${color}-707)`); // primary-707
+				root.style.setProperty("--color-primary-800", `var(--color-${color}-800)`); // primary-800
+				root.style.setProperty("--color-primary-880", `var(--color-${color}-880)`); // primary-880
+				root.style.setProperty("--color-primary-888", `var(--color-${color}-888)`); // primary-888
+				root.style.setProperty("--color-primary-808", `var(--color-${color}-808)`); // primary-808
+				root.style.setProperty("--color-primary-008", `var(--color-${color}-008)`); // primary-008
+				root.style.setProperty("--color-primary-900", `var(--color-${color}-900)`); // primary-900
+				root.style.setProperty("--color-primary-990", `var(--color-${color}-990)`); // primary-990
+				root.style.setProperty("--color-primary-999", `var(--color-${color}-999)`); // primary-999
+				root.style.setProperty("--color-primary-1000", `var(--color-${color}-1000)`); // primary-1000
+				root.style.setProperty("--color-primary-1100", `var(--color-${color}-1100)`); // primary-1100
+				root.style.setProperty("--color-primary-1200", `var(--color-${color}-1200)`); // primary-1200
+				root.style.setProperty("--color-primary-1300", `var(--color-${color}-1300)`); // primary-1300
+				root.style.setProperty("--color-primary-1400", `var(--color-${color}-1400)`); // primary-1400
+				root.style.setProperty("--color-primary-1500", `var(--color-${color}-1500)`); // primary-1500
+				root.style.setProperty("--color-primary-1600", `var(--color-${color}-1600)`); // primary-1600
+				root.style.setProperty("--color-primary-1700", `var(--color-${color}-1700)`); // primary-1700
+                this.selectedColor = color;
+                window.localStorage.setItem("color", color);
+                const currentTheme = JSON.parse(window.localStorage.getItem("dark")) || false; // احصل على الوضع الحالي
+                newTheme(currentTheme, color); // إرسال الوضع واللون
+                //
+            };
+
+            const setup = () => {
+                const getTheme = () => {
+                    if (window.localStorage.getItem("dark")) {
+                        return JSON.parse(window.localStorage.getItem("dark"));
+                    }
+
+                    return !!window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+                };
+
+                const setTheme = (value) => {
+                    window.localStorage.setItem("dark", value);
+                };
+
+                const getColor = () => {
+                    if (window.localStorage.getItem("color")) {
+                        return window.localStorage.getItem("color");
+                    }
+                    return "colored";
+                };
+                /*
+                const updateBarChart = (on) => {
+                    const data = {
+                        data: randomData(),
+                        backgroundColor: "rgb(207, 250, 254)",
+                    };
+                    if (on) {
+                        barChart.data.datasets.push(data);
+                        barChart.update();
+                    } else {
+                        barChart.data.datasets.splice(1);
+                        barChart.update();
+                    }
+                };
+				*/
+                return {
+                    loading: true,
+                    isDark: getTheme(),
+                    toggleTheme() {
+                        this.isDark = !this.isDark;
+                        setTheme(this.isDark);
+                        // استدعاء toggleShadow هنا أيضاً عند تغيير الوضع المظلم
+                        //toggleShadow(getColor(), this.isDark); // هذا هو التعديل المهم
+                    },
+                    setLightTheme() {
+                        this.isDark = false;
+                        setTheme(this.isDark);
+                        // استدعاء toggleShadow هنا أيضاً عند تغيير الوضع المظلم
+                        //toggleShadow(getColor(), this.isDark); // هذا هو التعديل المهم
+                    },
+                    setDarkTheme() {
+                        this.isDark = true;
+                        setTheme(this.isDark);
+                        // استدعاء toggleShadow هنا أيضاً عند تغيير الوضع المظلم
+                        //toggleShadow(getColor(), this.isDark); // هذا هو التعديل المهم
+                    },
+                    color: getColor(),
+                    selectedColor: "colored",
+                    setColors,
+                };
+            };
+
+            // دالة لتبديل الوضع (Dark/Light Mode) وتحديث التخزين المحلي
+            const toggleTheme = () => {
+                const currentTheme = JSON.parse(window.localStorage.getItem("dark")) || false; // الوضع الحالي
+                const isNowDarkTheme = !currentTheme; // عكس الوضع
+                //newTheme(isNowDarkTheme); // استدعاء newTheme مع السياق الصحيح
+
+                const currentColor = window.localStorage.getItem("color") || "colored"; // احصل على اللون الحالي
+                newTheme(isNowDarkTheme, currentColor); // إرسال الوضع واللون
+                //alert(currentColor);
+                //newTheme(isNowDarkTheme, currentColor); // إرسال الوضع واللون
+                //window.localStorage.setItem("dark", JSON.stringify(isNowDarkTheme)); // تخزين الوضع الجديد
+            };
+
+            function newTheme(newThemeValue, colorValue) {
+                //alert(newThemeValue);
+                if (newThemeValue === true || newThemeValue === false) {
+                    // تحقق من أن القيمة منطقية
+                    this.isDark = newThemeValue; // تحديث حالة الوضع الليلي/النهاري
+                    window.localStorage.setItem("dark", JSON.stringify(this.isDark)); // تخزين القيمة في التخزين المحلي
+                    //setColors("colored"); // تخزين اللون الحالي
+
+                    // الحصول على اللون الحالي
+                    const currentColor = window.localStorage.getItem("color") || "colored";
+                    // إرسال رسالة إلى backBody
+                    if (window.chrome && window.chrome.webview) {
+                        window.chrome.webview.postMessage(
+                            JSON.stringify({
+                                type: "theme.Changed",
+                                value: newThemeValue,
+                                color: currentColor,
+                            })
+                        );
+                    } else {
+                        console.error("chrome.webview غير متوفر. قد تكون الصفحة لا تعمل داخل WebView2.");
+                    }
+                    // هنا يمكنك إضافة تحديثات أخرى للتنسيق، مثل تغيير الألوان
+                } else {
+                    console.error("قيمة غير صحيحة للوضع الليلي/النهاري:", newThemeValue);
+                }
+            }
+
+            // إضافة مستمع للنقر على زر تبديل الوضع
+            const themeToggleButton = document.getElementById("buttonTheme");
+            if (themeToggleButton) {
+                themeToggleButton.addEventListener("click", toggleTheme);
+            } else {
+                console.error("Theme toggle button not found!");
+            }
+
+            // تحديد جميع العناصر التي تحمل الكلاس "interactive-element"
+            const interactiveElements = document.querySelectorAll(".interactive-element");
+
+            // المرور على كل عنصر من العناصر المحددة
+            interactiveElements.forEach((element) => {
+                // إضافة مُستمع حدث "mousedown" (الضغط على زر الفأرة)
+                element.addEventListener("mousedown", () => {
+                    // قراءة قيمة وضع الظلام من localStorage وتعيين قيمة افتراضية false إذا لم تكن موجودة
+                    const isDarkMode = JSON.parse(window.localStorage.getItem("dark")) || false;
+
+                    // الحصول على قيم المتغيرات CSS المخصصة (Custom Properties/CSS Variables)
+                    const activeBg = getComputedStyle(element).getPropertyValue("--active-bg"); // لون الخلفية في الوضع الفاتح
+                    const activeBgDark = getComputedStyle(element).getPropertyValue("--active-bg-dark"); // لون الخلفية في الوضع الداكن
+
+                    // تعيين لون الخلفية بناءً على وضع الظلام، مع التحقق من وجود قيم المتغيرات
+                    element.style.setProperty("background-color", isDarkMode && activeBgDark ? activeBgDark : activeBg);
+
+                    // شرح إضافي:
+                    // العامل الثلاثي (isDarkMode && activeBgDark ? activeBgDark : activeBg) يعمل كالتالي:
+                    // 1. يتم التحقق أولاً من قيمة isDarkMode، ثم يتم التحقق من وجود قيمة ل activeBgDark.
+                    // 2. إذا كان كلاهما صحيحًا (وضع الظلام مُفعَّل والمتغير موجود)، يتم استخدام قيمة activeBgDark.
+                    // 3. إذا كان أحدهما أو كلاهما خطأ، يتم استخدام قيمة activeBg.
+                    // هذا يمنع حدوث أخطاء إذا لم يتم تعريف المتغير --active-bg-dark في CSS.
+                });
+
+                // إضافة مُستمع حدث "mouseup" (رفع زر الفأرة)
+                element.addEventListener("mouseup", () => {
+                    // إزالة خاصية لون الخلفية لإعادة اللون الأصلي المحدد في CSS
+                    element.style.removeProperty("background-color");
+
+                    // شرح إضافي:
+                    // استخدام removeProperty('background-color') هو الأفضل هنا، لأنه يعيد لون الخلفية إلى القيمة المُحددة في CSS (سواء كانت من خلال Tailwind CSS أو أي أنماط أخرى).
+                    // تعيين backgroundColor = '' له نفس التأثير في معظم الحالات، ولكنه قد لا يعمل بشكل صحيح في بعض الحالات المعقدة.
+                });
+
+                // إضافة مُستمع حدث "mouseleave" (خروج مؤشر الفأرة من العنصر)
+                element.addEventListener("mouseleave", () => {
+                    // إزالة خاصية لون الخلفية لإعادة اللون الأصلي المحدد في CSS (نفس السبب كما في mouseup)
+                    element.style.removeProperty("background-color");
+                });
+            });
+			
+			
+			
+			document.addEventListener("DOMContentLoaded", function () {
+				// دالة لجلب قيمة اللون من localStorage. إذا لم تكن موجودة، تُرجع القيمة الافتراضية "colored".
+				const getColor = () => window.localStorage.getItem("color") || "colored";
+
+				// مصفوفة تحتوي على معلومات الأزرار: id (معرف العنصر في HTML) و originalText (النص الأصلي أو القيمة التي سيتم إرسالها).
+				const labels = [
+					{ id: "buttonClose", originalText: "Close" }, // زر الإغلاق
+					{ id: "buttonMinimize", originalText: "Minimize" }, // زر التصغير
+					{ id: "buttonSettings", originalText: "Edit Settings" }, // زر الإعدادات
+					{ id: "buttonHelp", originalText: "More about App" }, // زر المساعدة
+					{ id: "buttonColoredLite", originalText: getColor() }, // زر اللون/الوضع (يتم جلب القيمة من localStorage)
+					{ id: "buttonLiteDark-light-icon", originalText: "Light Mode" }, // زر الوضع الفاتح
+					{ id: "buttonLiteDark-dark-icon", originalText: "Dark Mode" }, // زر الوضع الداكن
+				];
+
+				// المرور على كل عنصر في مصفوفة labels.
+				labels.forEach((label) => {
+					// جلب العنصر من DOM باستخدام معرفه (id).
+					const element = document.getElementById(label.id);
+
+					// التحقق من وجود العنصر في DOM.
+					if (element) {
+						// إضافة مستمعين للأحداث (mouseover, mouseout, click) لكل زر.
+						element.addEventListener("mouseover", () => {
+							// عند تحريك مؤشر الماوس فوق الزر:
+							// يتم إرسال رسالة إلى webView2.
+							// إذا كان الزر هو "buttonColoredLite"، يتم إرسال قيمة اللون من localStorage.
+							// خلاف ذلك، يتم إرسال النص الأصلي (originalText).
+							sendMessage("mouse.over", label.id, label.id === "buttonColoredLite" ? getColor() : label.originalText);
+						});
+
+						element.addEventListener("mouseout", () => {
+							// عند تحريك مؤشر الماوس خارج الزر:
+							// نفس المنطق كما في mouseover.
+							sendMessage("mouse.out", label.id, label.id === "buttonColoredLite" ? getColor() : label.originalText);
+						});
+
+						element.addEventListener("click", () => {
+							// عند النقر على الزر:
+							// نفس المنطق كما في mouseover و mouseout.
+							sendMessage("button.click", label.id, label.id === "buttonColoredLite" ? getColor() : label.originalText);
+						});
+					} else {
+						// إذا لم يتم العثور على العنصر، يتم تسجيل خطأ في وحدة التحكم (Console).
+						console.error(`العنصر ذو المعرف ${label.id} غير موجود.`);
+					}
+				});
+			});
+			
+			// دالة مُوحّدة لإرسال الرسائل مع معالجة الأخطاء
+			function sendMessage(eventType, targetId, message) { // قيمة افتراضية للرسالة
+				try {
+					const messageObject = {
+						type: eventType,
+						target: targetId,
+						jmessage: message // إضافة الرسالة الاختيارية
+					};
+					console.log(JSON.stringify(messageObject, null, 2)); // طباعة JSON للتأكد من صحته
+					window.chrome.webview.postMessage(JSON.stringify(messageObject));
+				} catch (error) {
+					console.error("خطأ في إرسال الرسالة:", error);
+				}
+			}
+			
+			
+
+            /*
+			if (pausecheckButton) {
+				pausecheckButton.addEventListener('click', function() {
+					const message = JSON.stringify({
+						type: 'button',
+						id: 'pausecheckbutton',
+						message: 'تم الضغط على زر Pause Check!'
+					});
+					window.chrome.webview.postMessage(message);
+				});
+			}
+			*/
+
+			
+			
+			
+			
+			
+			
+			
+			
+			// استلام الرسائل من WebView2
+			window.chrome.webview.addEventListener('message', event => {
+
+			  try {
+				//const data = JSON.parse(event.data); // تحليل البيانات
+				const data = JSON.parse(event.data);
+				console.log("البيانات المستلمة:", data); // طباعة الكائن بالكامل للتأكد
+			
+			
+			} catch (error) {
+				console.error("خطأ في تحليل JSON:", error); // مهم جداً لكشف أي أخطاء
+				console.error("البيانات المستلمة الخام:", event.data); // طباعة البيانات الخام للمساعدة في تصحيح الأخطاء
+			  }
+			});
+        </script>
+    </body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <script src="build/js/tailwindcss.cdn.3.4.16.js"></script>
+    <link rel="stylesheet" href="build/css/tailwind.css" />
+    <script src="build/dist/alpine.min.js" defer></script>
+	<style>
+	* {
+		-webkit-user-select: none; /* Safari */
+		-moz-user-select: none; /* Firefox */
+		-ms-user-select: none; /* IE10+/Edge */
+		user-select: none; /* معيار CSS */
+	}
+	* {
+		cursor: default;
+		user-select: none;
+	}
+	.noCursor {
+		cursor: default;
+	}
+	.no-shadow {
+		box-shadow: none;
+	}
+	html, body {
+		overflow: hidden; /* تعطيل التمرير */
+		overflow: hidden !important;
+		-ms-overflow-style: none !important;
+		scrollbar-width: none !important;
+	}
+	html::-webkit-scrollbar, body::-webkit-scrollbar {
+		display: none; /* إخفاء شريط التمرير في Chrome و Edge */
+	}
+	.flex-1.h-full.overflow-y-auto { /* استهداف الكلاسات المُحدَّدة */
+		overflow: hidden; /* أو الأنماط الأخرى */
+		-ms-overflow-style: none;
+		scrollbar-width: none;
+	}
+	</style>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+			theme: {
+				extend: {
+				  boxShadow: {
+					'inner-equal': 'inset 0px 0px 8px 0px rgba(207, 183, 193, 0.4)', // ظل داخلي مُتساوٍ
+					'inner-equal-md': 'inset 0px 0px 12px 0px rgba(207, 183, 193, 0.4)',
+					'inner-equal-lg': 'inset 0px 0px 16px 0px rgba(207, 183, 193, 0.4)',
+					// يمكنك إضافة المزيد من الظلال الداخلية المُخصصة هنا
+				  },
+				},
+			},
+        };
+		
+    </script>
+</head>
+<body onmousedown="return false" onselectstart="return false" oncopy="return false" oncut="return false" scroll="no">
+    <div x-data="setup()">
+        <div class="flex h-screen antialiased">
+            <div id="loadings" x-ref="loading" class="fixed inset-0 z-50 flex items-center justify-center text-2xl font-semibold text-white bg-gray-100 dark:bg-primary-1600 hidden">
+                .....
+            </div>
+            <div class="flex-1 h-full overflow-x-hidden overflow-y-auto p-0 bg-primary-100 dark:bg-primary-1600" style="padding: 3px;">
+                <div class="rounded-lg p-4 border border-gray-300 dark:border-gray-700 shadow-sm w-full h-full bg-primary-200 dark:bg-primary-1700">
+					
+				</div>
+            </div>
+        </div>
+    </div>
+    <script>
+	
+	const currentThemes = JSON.parse(window.localStorage.getItem("dark")) || false; // الوضع الحالي
+					const loadingElement = document.getElementById('loadings');
+					
+					if(currentThemes) {
+						//alert(currentThemes);
+						loadingElement.classList.remove('bg-[#E1EAF1]'); // هذا هو الصنف الذي يُعطي اللون الأصلي
+						loadingElement.classList.remove('text-gray-500'); // هذا هو الصنف الذي يُعطي اللون الأصلي
+						loadingElement.classList.add('bg-[#232F3F]'); // يمكنك تغيير 'red' إلى أي لون آخر
+						loadingElement.classList.add('text-[#57C3EA]'); // يمكنك تغيير 'red' إلى أي لون آخر
+					} else {
+						//loadingElement.classList.remove('bg-[#E1EAF1]'); // هذا هو الصنف الذي يُعطي اللون الأصلي
+						//loadingElement.classList.remove('text-gray-500'); // هذا هو الصنف الذي يُعطي اللون الأصلي
+						loadingElement.classList.add('bg-[#FFF0F5]'); // يمكنك تغيير 'red' إلى أي لون آخر
+						//loadingElement.classList.add('text-[#57C3EA]'); // يمكنك تغيير 'red' إلى أي لون آخر
+					}
+	
+        const setColors = (color) => {
+			const root = document.documentElement;
+			root.style.setProperty("--color-primary-000", `var(--color-${color}-000)`); // primary-000
+            root.style.setProperty("--color-primary-100", `var(--color-${color}-100)`); // primary-100
+            root.style.setProperty("--color-primary-200", `var(--color-${color}-200)`); // primary-200
+            root.style.setProperty("--color-primary-220", `var(--color-${color}-220)`); // primary-220
+            root.style.setProperty("--color-primary-222", `var(--color-${color}-222)`); // primary-222
+			root.style.setProperty("--color-primary-202", `var(--color-${color}-202)`); // primary-202
+			root.style.setProperty("--color-primary-002", `var(--color-${color}-002)`); // primary-002
+            root.style.setProperty("--color-primary-300", `var(--color-${color}-300)`); // primary-300
+            root.style.setProperty("--color-primary-400", `var(--color-${color}-400)`); // primary-400
+            root.style.setProperty("--color-primary-440", `var(--color-${color}-440)`); // primary-440
+            root.style.setProperty("--color-primary-444", `var(--color-${color}-444)`); // primary-444
+            root.style.setProperty("--color-primary-404", `var(--color-${color}-404)`); // primary-404
+            root.style.setProperty("--color-primary-500", `var(--color-${color}-500)`); // primary-500
+            root.style.setProperty("--color-primary-600", `var(--color-${color}-600)`); // primary-600
+            root.style.setProperty("--color-primary-700", `var(--color-${color}-700)`); // primary-700
+            root.style.setProperty("--color-primary-770", `var(--color-${color}-770)`); // primary-770
+            root.style.setProperty("--color-primary-007", `var(--color-${color}-007)`); // primary-007
+            root.style.setProperty("--color-primary-707", `var(--color-${color}-707)`); // primary-707
+            root.style.setProperty("--color-primary-800", `var(--color-${color}-800)`); // primary-800
+            root.style.setProperty("--color-primary-880", `var(--color-${color}-880)`); // primary-880
+            root.style.setProperty("--color-primary-888", `var(--color-${color}-888)`); // primary-888
+            root.style.setProperty("--color-primary-808", `var(--color-${color}-808)`); // primary-808
+			root.style.setProperty("--color-primary-008", `var(--color-${color}-008)`); // primary-008
+            root.style.setProperty("--color-primary-900", `var(--color-${color}-900)`); // primary-900
+            root.style.setProperty("--color-primary-990", `var(--color-${color}-990)`); // primary-990
+            root.style.setProperty("--color-primary-999", `var(--color-${color}-999)`); // primary-999
+            root.style.setProperty("--color-primary-1000", `var(--color-${color}-1000)`); // primary-1000
+            root.style.setProperty("--color-primary-1100", `var(--color-${color}-1100)`); // primary-1100
+            root.style.setProperty("--color-primary-1200", `var(--color-${color}-1200)`); // primary-1200
+            root.style.setProperty("--color-primary-1300", `var(--color-${color}-1300)`); // primary-1300
+            root.style.setProperty("--color-primary-1400", `var(--color-${color}-1400)`); // primary-1400
+            root.style.setProperty("--color-primary-1500", `var(--color-${color}-1500)`); // primary-1500
+            root.style.setProperty("--color-primary-1600", `var(--color-${color}-1600)`); // primary-1600
+            root.style.setProperty("--color-primary-1700", `var(--color-${color}-1700)`); // primary-1700
+        };
+
+        const setup = () => {
+            const getTheme = () => JSON.parse(window.localStorage.getItem("dark")) || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) || false;
+            const getColor = () => window.localStorage.getItem("color") || "colored";
+
+            const applyInitialThemeAndColor = () => {
+                const isDark = getTheme();
+                const color = getColor();
+				//alert(isDark);
+				if(!isDark) {
+					//alert('Its Not Dark');
+				}
+                document.documentElement.classList.toggle('dark', isDark);
+                setColors(color);
+            };
+			
+			/*
+            window.addEventListener("message", function (event) {
+			alert();
+			
+                if (event.data.type === "theme.changed.success") {
+                    const newThemeValue = event.data.value;
+                    document.documentElement.classList.toggle('dark', newThemeValue);
+                }
+                if (event.data.type === "colorChanged") {
+                    const newColorValue = event.data.value;
+                    setColors(newColorValue);
+                }
+            });
+			*/
+			
+			if (window.chrome && window.chrome.webview) {
+                window.chrome.webview.addEventListener("message", (event) => {
+					console.log("Received Data: ", event.data);
+                    const data = JSON.parse(event.data);
+					console.log("تم استلام قيمة الوضع الجديد في backBody: " + data.type );
+                    if (data.type === "theme.changed.success") {
+						applyInitialThemeAndColor();
+						document.documentElement.classList.toggle('dark', data.value);
+						
+						if (data.color) {
+							setColors(data.color);
+						}
+					}
+                });
+            }
+
+            return {
+                
+                
+            };
+        };
+		
+		document.addEventListener('DOMContentLoaded', function() {
+			document.documentElement.style.overflow = 'hidden'; // أو الأنماط الأخرى لإخفاء الأشرطة مع إبقاء التمرير
+			document.documentElement.style.msOverflowStyle = 'none';
+			document.documentElement.style.scrollbarWidth = 'none';
+		});
+		
+		document.addEventListener('click', function(event) {
+			// الحصول على معلومات حول مكان الضغطة (اختياري)
+			var x = event.clientX;
+			var y = event.clientY;
+			// إرسال رسالة إلى تطبيق WinForms
+			const message = JSON.stringify({
+				type: "hide.menu",
+				x: x,
+				y: y,
+			});
+			console.log("message: " + message);
+			window.chrome.webview.postMessage(message);
+		});
+    </script>
+</body>
+</html>

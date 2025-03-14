@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="build/css/css2.css" rel="stylesheet" />
+    <script src="build/js/tailwindcss.cdn.3.4.16.js"></script>
+    <link rel="stylesheet" href="build/css/tailwind.css" />
+	<style>
+            /*Overrides for Tailwind CSS */
+            /*Form fields*/
+
+            @font-face {
+                font-family: "OpenSans-Regular";
+                src: url("../../fonts/OpenSans-Regular.ttf");
+            }
+	</style>
+</head>
+<body class="bg-gray-100 h-screen flex items-center justify-center" style="font-family: OpenSans-Regular; font-weight: normal;">
+    <div class="bg-white rounded-lg shadow-lg p-4 w-[500px]">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-4">
+            <span class="text-md" id="progress-percent">99% complete</span>
+            <div class="flex gap-2">
+                <button id="pause-btn" class="text-gray-500 hover:bg-gray-100 p-1 rounded">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                    </svg>
+                </button>
+                <button id="close-btn" class="text-gray-500 hover:bg-gray-100 p-1 rounded">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Copy Info -->
+        <div class="text-md mb-2">
+            Installing updates (<span id="total-items">4,750</span> items) from <span class="text-blue-600">repos</span> to <span class="text-blue-600">repos</span>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="w-full h-[90px] bg-gray-200 rounded-sm mb-2 relative overflow-hidden" style="padding: 1px;">
+			<div id="progress-bar" class="h-full w-[100%] bg-gray-100 rounded-sm relative" style="padding: 1px;">
+				<div id="progress-bar" class="h-full w-[75%] bg-green-500 rounded-sm relative">
+					<div class="absolute inset-0 bg-gradient-to-b from-green-400 to-green-600 opacity-50"></div>
+				</div>
+			</div>
+        </div>
+
+        <!-- Stats -->
+        <div class="flex justify-between text-md text-gray-600">
+            <div>Speed: <span id="speed">15.5 MB/s</span></div>
+            <div>Time remaining: <span id="time-remaining">About 5 seconds</span></div>
+        </div>
+
+        <!-- File Info -->
+        <div class="mt-2">
+            <div class="text-md">Name: <span id="current-file">05b8ee0f-5f59-41b4-bac5-afc8ab64990f.vsidx</span></div>
+            <div class="text-md">Items remaining: <span id="items-remaining">21</span> (<span id="size-remaining">2.11 MB</span>)</div>
+        </div>
+
+        <!-- Fewer Details -->
+        <button id="toggle-details" class="mt-4 text-md text-gray-600 flex items-center gap-1">
+            <svg class="w-4 h-4 transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+            Fewer details
+        </button>
+    </div>
+    <script src="/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ar" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تحديث البرنامج</title>
+  <!-- استخدام الروابط المحدثة التي تعمل -->
+  <link href="build/css/css2.css" rel="stylesheet" />
+  <script src="build/js/tailwindcss.cdn.3.4.16.js"></script>
+  <link rel="stylesheet" href="build/css/tailwind.css" />
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .progress-container {
+      height: 80px;
+      position: relative;
+      overflow: hidden;
+    }
+    .graph-path {
+      fill: #65cb65;
+      transition: all 0.5s ease;
+    }
+    .graph-container {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+  <div class="bg-white shadow-lg rounded w-96 p-3">
+    <!-- رأس النافذة -->
+    <div class="flex justify-between items-center mb-2">
+      <div class="flex items-center">
+        <div class="rounded-full bg-gray-200 p-0.5 mr-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <span class="text-xs font-medium"><span id="percentage">0</span>% complete</span>
+      </div>
+      <div class="flex">
+        <button class="mx-0.5 text-gray-500">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 12H6" />
+          </svg>
+        </button>
+        <button class="mx-0.5 text-gray-500">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+          </svg>
+        </button>
+        <button class="mx-0.5 text-gray-500">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+    
+    <!-- تفاصيل النسخ -->
+    <div class="mb-2">
+      <div class="flex text-xs">
+        <span>Downloading update files: <span id="downloaded-count">0</span> of <span id="total-count">150</span> MB</span>
+      </div>
+      
+      <div class="flex justify-between my-1">
+        <span class="text-xs font-medium"><span id="percentage-2">0</span>% complete</span>
+        <div class="flex items-center">
+          <button id="pause-button" class="mx-0.5 text-gray-500">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </button>
+          <button id="cancel-button" class="mx-0.5 text-gray-500">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- شريط التقدم والرسم البياني -->
+    <div class="progress-container bg-green-50 mb-3 rounded">
+      <!-- الرسم البياني للسرعة -->
+      <div class="graph-container" id="progress-fill" style="width: 0%;">
+        <svg viewBox="0 0 100 30" preserveAspectRatio="none" class="w-full h-full">
+          <path id="graph-path" d="M0,30 L5,25 L10,22 L15,20 L20,15 L25,18 L30,10 L35,8 L40,5 L45,7 L50,10 L55,8 L60,12 L65,15 L70,20 L75,18 L80,22 L85,20 L90,24 L95,26 L100,28 L100,30 L0,30 Z" class="graph-path" />
+        </svg>
+      </div>
+      
+      <!-- نص السرعة -->
+      <div class="absolute right-2 top-1 text-xs font-medium bg-transparent px-1 rounded">
+        Speed: <span id="speed">0.0</span> MB/s
+      </div>
+    </div>
+    
+    <!-- معلومات الملف -->
+    <div class="text-xs mb-3">
+      <div class="flex mb-1">
+        <span class="font-medium mr-1">Name:</span>
+        <span class="text-gray-700" id="current-file">Waiting to start...</span>
+      </div>
+      <div class="flex mb-1">
+        <span class="font-medium mr-1">Time remaining:</span>
+        <span class="text-gray-700" id="time-remaining">Calculating...</span>
+      </div>
+      <div class="flex">
+        <span class="font-medium mr-1">Items remaining:</span>
+        <span class="text-gray-700" id="items-remaining">All files</span>
+      </div>
+    </div>
+    
+    <!-- زر عرض تفاصيل أقل -->
+    <button class="flex items-center text-xs text-gray-700">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+      </svg>
+      Fewer details
+    </button>
+  </div>
+
+  <script>
+    // قائمة الملفات الوهمية للتحميل
+    const files = [
+      { name: 'system-update-core.bin', size: 24.7 },
+      { name: 'user-interface-components.pkg', size: 18.3 },
+      { name: 'database-schema-v2.db', size: 12.5 },
+      { name: 'api-frameworks.dll', size: 15.9 },
+      { name: 'security-patches-march.bin', size: 8.8 },
+      { name: 'multimedia-codecs.pkg', size: 22.3 },
+      { name: 'language-packs.zip', size: 14.7 },
+      { name: 'runtime-libraries.dll', size: 19.8 },
+      { name: 'network-components.sys', size: 13.0 }
+    ];
+
+    // المتغيرات العامة
+    let currentFileIndex = 0;
+    let totalDownloaded = 0;
+    let downloadSpeed = 0;
+    let isPaused = false;
+    let totalSize = 0;
+    let startTime = Date.now();
+    let updateInterval;
+    
+    // حساب إجمالي الحجم
+    files.forEach(file => {
+      totalSize += file.size;
+    });
+    
+    // تحديث العناصر في الواجهة
+    document.getElementById('total-count').textContent = totalSize.toFixed(1);
+    
+    // بدء المحاكاة
+    function startSimulation() {
+      startTime = Date.now();
+      updateProgress();
+      updateInterval = setInterval(updateProgress, 500);
+    }
+    
+    // تحديث التقدم
+    function updateProgress() {
+      if (isPaused) return;
+      
+      // حساب الوقت المنقضي
+      const elapsed = (Date.now() - startTime) / 1000;
+      
+      // حساب سرعة التحميل الوهمية (متغيرة قليلاً للواقعية)
+      downloadSpeed = 0.5 + Math.sin(elapsed / 2) * 0.2;
+      
+      // إضافة المقدار المحمل
+      totalDownloaded += downloadSpeed * 0.5;
+      
+      // التأكد من عدم تجاوز الحد
+      if (totalDownloaded > totalSize) {
+        totalDownloaded = totalSize;
+        clearInterval(updateInterval);
+        finishDownload();
+      }
+      
+      // حساب النسبة المئوية
+      const percentage = Math.floor((totalDownloaded / totalSize) * 100);
+      
+      // تحديث المؤشرات
+      document.getElementById('percentage').textContent = percentage;
+      document.getElementById('percentage-2').textContent = percentage;
+      document.getElementById('downloaded-count').textContent = totalDownloaded.toFixed(1);
+      document.getElementById('speed').textContent = downloadSpeed.toFixed(1);
+      document.getElementById('progress-fill').style.width = `${percentage}%`;
+      
+      // تحديث الملف الحالي
+      updateCurrentFile();
+      
+      // تحديث الوقت المتبقي
+      const remainingSize = totalSize - totalDownloaded;
+      const remainingTime = remainingSize / downloadSpeed;
+      updateRemainingTime(remainingTime);
+      
+      // تحديث العناصر المتبقية
+      updateRemainingItems();
+      
+      // تحديث خط الرسم البياني
+      updateGraphPath();
+    }
+    
+    // تحديث الملف الحالي
+    function updateCurrentFile() {
+      // العثور على الملف الحالي بناءً على المقدار المحمل
+      let accumulatedSize = 0;
+      
+      for (let i = 0; i < files.length; i++) {
+        accumulatedSize += files[i].size;
+        if (accumulatedSize > totalDownloaded) {
+          currentFileIndex = i;
+          document.getElementById('current-file').textContent = files[i].name;
+          break;
+        }
+      }
+    }
+    
+    // تحديث الوقت المتبقي
+    function updateRemainingTime(seconds) {
+      if (seconds < 60) {
+        document.getElementById('time-remaining').textContent = `About ${Math.ceil(seconds)} seconds`;
+      } else {
+        const minutes = Math.floor(seconds / 60);
+        document.getElementById('time-remaining').textContent = `About ${minutes} minute${minutes > 1 ? 's' : ''}`;
+      }
+    }
+    
+    // تحديث العناصر المتبقية
+    function updateRemainingItems() {
+      const remainingFiles = files.length - currentFileIndex;
+      const remainingSize = totalSize - totalDownloaded;
+      document.getElementById('items-remaining').textContent = `${remainingFiles} (${remainingSize.toFixed(2)} MB)`;
+    }
+    
+    // تحديث شكل خط الرسم البياني
+    function updateGraphPath() {
+      const elapsed = (Date.now() - startTime) / 1000;
+      
+      // إنشاء مسار متحرك للرسم البياني
+      let pathData = "M0,30 ";
+      for (let i = 0; i <= 100; i += 5) {
+        const y = 20 + Math.sin((i / 10) + elapsed) * 10;
+        pathData += `L${i},${30 - (downloadSpeed * 2 + Math.sin(i/10 + elapsed) * 3)} `;
+      }
+      pathData += "L100,30 L0,30 Z";
+      
+      document.getElementById('graph-path').setAttribute('d', pathData);
+    }
+    
+    // إنهاء التحميل
+    function finishDownload() {
+      document.getElementById('current-file').textContent = "Complete!";
+      document.getElementById('time-remaining').textContent = "Finished";
+      document.getElementById('items-remaining').textContent = "0 (0.00 MB)";
+      document.getElementById('speed').textContent = "0.0";
+      
+      // إظهار رسالة الانتهاء بعد ثانيتين
+      setTimeout(() => {
+        alert("التحديث اكتمل بنجاح! يمكنك الآن إعادة تشغيل البرنامج للاستفادة من الميزات الجديدة.");
+      }, 2000);
+    }
+    
+    // إيقاف/تشغيل التحميل
+    document.getElementById('pause-button').addEventListener('click', function() {
+      isPaused = !isPaused;
+      this.innerHTML = isPaused 
+        ? '<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>'
+        : '<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+      
+      if (!isPaused) {
+        startTime = Date.now() - (totalDownloaded / downloadSpeed) * 1000;
+      }
+    });
+    
+    // إلغاء التحميل
+    document.getElementById('cancel-button').addEventListener('click', function() {
+      if (confirm("هل أنت متأكد من رغبتك في إلغاء التحديث؟")) {
+        clearInterval(updateInterval);
+        document.getElementById('current-file').textContent = "Cancelled";
+        document.getElementById('time-remaining').textContent = "Cancelled";
+        document.getElementById('speed').textContent = "0.0";
+      }
+    });
+    
+    // بدء المحاكاة عند تحميل الصفحة
+    window.onload = startSimulation;
+  </script>
+</body>
+</html>
