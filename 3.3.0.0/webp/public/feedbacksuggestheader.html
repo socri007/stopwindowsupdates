@@ -1,0 +1,898 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+        <script src="build/js/lucide@latest"></script>
+		<link href="build/css/css2.css" rel="stylesheet" />
+		<script src="build/js/tailwindcss.cdn.3.4.16.js"></script>
+		<link rel="stylesheet" href="build/css/tailwind.css" />
+        <!--Regular Datatables CSS-->
+
+        <style>
+            /*Overrides for Tailwind CSS */
+            /*Form fields*/
+
+            @font-face {
+                font-family: "mybigtitlefont";
+                src: url("../../fonts/NexaRustSlab-BlackShadow01.otf");
+            }
+            @font-face {
+                font-family: "mybigtitlefontDark";
+                src: url("../../fonts/Cairo-Black.ttf");
+            }
+            html {
+                font-family: cairo, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+                    "Noto Color Emoji";
+                /* 1 */
+                line-height: 1.5;
+                /* 2 */
+            }
+
+            .inner {
+                padding: 0px;
+            }
+            .inner .scanattemptsnumberUpper {
+                margin: -12px 0px 0 0;
+                font-size: 40px;
+                font-family: mybigtitlefont;
+                font-weight: bold;
+                white-space: nowrap;
+                padding: 0;
+                letter-spacing: 0.02em; /* مسافة مُعتمدة على حجم الخط */
+            }
+            .inner .scanattemptsnumberLower {
+                margin: -10px 0px 0px 0;
+                font-size: 40px;
+                font-family: mybigtitlefont;
+                font-weight: bold;
+                white-space: nowrap;
+                padding: 0;
+                letter-spacing: 0.02em; /* مسافة مُعتمدة على حجم الخط */
+            }
+            .inner .scanattemptsUpper {
+                margin: -12px 0 -9px 0;
+                font-size: 25px;
+                font-family: cairo;
+                font-weight: bold;
+                text-align: right;
+            }
+            .inner .scanattemptsLower {
+                margin: -87px 0 10px 0;
+                font-size: 22px;
+                font-family: cairo;
+                font-weight: bold;
+                text-align: right;
+            }
+
+            .table-responsive {
+                max-height: 305px; /* تحديد ارتفاع أقصى للعنصر الحاوي */
+                overflow-y: auto; /* إضافة تمرير عمودي عند تجاوز الارتفاع */
+                overflow-x: auto; /* إضافة تمرير أفقي عند الحاجة */
+                margin-top: 0px;
+            }
+
+            .table {
+                width: 100%;
+                border-collapse: collapse; /* دمج حدود الخلايا */
+            }
+
+            .table th,
+            .table td {
+                padding: 3px 10px;
+                //border-right: 1px solid rgba(0, 0, 0, 0.19);
+                white-space: nowrap; /* منع التفاف النص داخل الخلية */
+            }
+            .table thead tr.active th {
+                background-color: #e9e9e9; /* لون خلفية رأس الجدول */
+                position2: sticky; /* تثبيت رأس الجدول */
+                top: 0;
+                z-index: 1; /* التأكد من أن الرأس يظهر فوق المحتوى */
+            }
+            table {
+                /* ... */
+            }
+
+            th {
+                font-size: 16px; /* حجم الخط المطلوب */
+                /* ... */
+            }
+            td {
+                font-weight: 500;
+                font-size: 16px; /* حجم الخط المطلوب */
+                /* ... */
+            }
+            * {
+                cursor: default;
+                user-select: none;
+            }
+
+            .table td,
+            .table th2 {
+                padding: 0.45rem;
+                vertical-align: top;
+                border-top: 1px solid rgba(0, 0, 0, 0.1);
+            }
+
+            .selected-row {
+                background-color: #2196f3 !important;
+                color: white;
+                transition: background-color 0.3s ease; /* إضافة انتقال سلس للون الخلفية */
+            }
+
+            .table-header {
+                background-color: #f0f0f0;
+                padding: 10px;
+                text-align: left;
+                font-weight: bold;
+            }
+
+            .content-wrapper {
+                margin-top: 35px; /* إضافة مسافة أعلى للابتعاد عن شريط التنقل */
+            }
+
+            .table-striped tbody tr:nth-of-type(odd) {
+                //background-color: rgba(0, 0, 0, 0.05);
+                //background-color: #F5F5F5;
+            }
+
+            tr.classRunning {
+                background-color: #ff4982;
+                color: #fff;
+            }
+            tr.classPending {
+                background-color: #ffeaf1;
+            }
+            tr.classPause {
+                background-color: #d9d9d9;
+            }
+            tr.class1Stopped {
+                background-color: #e7f4fe;
+                color: #000;
+            } //	background-color:#2196F3;
+            tr.classRSS {
+                background-color: #75f94d;
+            }
+
+            * {
+                -webkit-user-select: none; /* Safari */
+                -moz-user-select: none; /* Firefox */
+                -ms-user-select: none; /* IE10+/Edge */
+                user-select: none; /* معيار CSS */
+            }
+            .table th {
+                /* ... أنماط أخرى ... */
+                //transition: background-color 0.1s ease; /* إضافة انتقال سلس */
+            }
+
+            .table th:hover {
+                background-color: #d1d1d1 !important; /* لون الخلفية عند التمرير */
+            }
+
+            .top-nav {
+                z-index: 1;
+                position: absolute;
+                top: 0; /*43px */
+                left: 1;
+                margin-left: 0px;
+                width: 100%; /* عرض كامل الصفحة */
+                height2: 50px; /* ارتفاع المطلوب */
+                background-color2: #e9e9e9; /* لون الخلفية */
+                color: #000;
+                box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1); /* ظل خفيف */
+                display: flex; /* عرض عناصر داخل الشريط بجانب بعض */
+                align-items: center; /* محاذاة العناصر عموديا بالوسط */
+                justify-content: space-between; /* توزيع العناصر بين المسافتين المتبقيتين */
+                padding: 0px; /* مسافة داخلية */
+            }
+
+            /* أمثلة لعناصر داخل شريط التنقل (تعديل حسب الحاجة) */
+            .top-nav a2 {
+                color: #333;
+                text-decoration: none;
+                padding: 3px 10px 3px 10px;
+            }
+
+            .top-nav th:hover2 {
+                background-color: #d1d1d1;
+            }
+
+            .top-nav {
+                /* ... */
+                display: flex;
+            }
+
+            .top-nav a2 {
+                /* ... */
+                flex-grow: 1;
+            }
+
+            .top-nav a:nth-child(3) {
+                /* تخصيص العنصر الثالث */
+                width2: 40%;
+                text-align2: center;
+            }
+            .rounded-div {
+                background-color: #fff0f5; /* أزرق فاتح */
+                padding: 10px 4px 3px 4px; /* مساحة داخلية (اختياري) */
+                border-top-left-radius: 15px; /* انحناء الزاوية العلوية اليسرى */
+                border-top-right-radius: 15px; /* انحناء الزاوية العلوية اليمنى */
+                /* أو اختصارًا: */
+                /* border-radius: 15px 15px 0 0; */
+                width: auto; /* عرض تلقائي ليناسب المحتوى */
+                display: inline-block; /* مهم لضبط العرض بشكل صحيح */
+                box-sizing: border-box; /* تضمين الحواف وال padding في عرض العنصر */
+                overflow: hidden; /* منع أي محتوى من الخروج عن الحدود المنحنية */
+            }
+
+            .autostyle1 {
+                text-align: right;
+            }
+
+            * {
+                -webkit-user-select: none; /* Safari */
+                -moz-user-select: none; /* Firefox */
+                -ms-user-select: none; /* IE10+/Edge */
+                user-select: none; /* معيار CSS */
+            }
+            * {
+                cursor: default;
+                user-select: none;
+            }
+
+            button,
+            [role="button"] {
+                cursor: default;
+            }
+            button,
+            [type="button"] {
+                cursor: default;
+            }
+            .noCursor {
+                cursor: default;
+            }
+
+            .no-shadow {
+                box-shadow: none;
+            }
+
+            .table-hover tbody tr {
+                //color: var(--dattrtext-100);
+                //background-color: rgba(0, 0, 0, 0.075);
+                //background-color: var(--dattrtext-100); // #C7E3F9 #E7F4FE
+            }
+
+            .table-hover tbody tr:hover {
+                color: #212529;
+                //background-color: rgba(0, 0, 0, 0.075);
+                background-color: var(--dattrtext-100); // #C7E3F9 #E7F4FE
+            }
+
+            :root {
+                --dattrtext-100: #c7e3f9;
+                --red2-1: #ff4982;
+                --red2-2: #e54174;
+                --border-bottom-color: #d1d5db; /* gray-700 للوضع العادي */
+            }
+
+            .dark {
+                --dattrtext-100: #9ca3af;
+                --border-bottom-color: #3a3f55; /* gray-400 للوضع الداكن */
+            }
+
+            .darkdiv {
+                margin-top: 4px;
+                padding: 0px 1px 1px 1px;
+                height: 18px;
+            }
+            .lightdiv {
+                margin-top: 6px;
+                margin-left: 2px;
+                padding-top: 1px;
+            }
+            html,
+            body {
+                overflow: hidden; /* تعطيل التمرير */
+                overflow: hidden !important;
+                -ms-overflow-style: none !important;
+                scrollbar-width: none !important;
+            }
+            html::-webkit-scrollbar,
+            body::-webkit-scrollbar {
+                display: none; /* إخفاء شريط التمرير في Chrome و Edge */
+            }
+            .flex-1.h-full.overflow-y-auto {
+                /* استهداف الكلاسات المُحدَّدة */
+                overflow: hidden; /* أو الأنماط الأخرى */
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+        </style>
+        <script src="build/dist/alpine.min.js" defer></script>
+		
+        <script>
+            tailwind.config = {
+                darkMode: "class",
+            };
+        </script>
+    </head>
+    <body onmousedown="return false" onselectstart="return false" oncopy="return false" oncut="return false" scroll="no">
+        <div x-data="setup()" x-init="$refs.loading.classList.add('hidden'); setColors(color);" :class="{ 'dark': isDark}">
+            <div class="flex h-screen antialiased text-gray-900 bg-primary-100 dark:bg-primary-1600 dark:text-400">
+                <!-- Loading screen -->
+                <div id="loadings" x-ref="loading" class="fixed inset-0 z-50 flex items-center justify-center text-2xl font-semibold text-white bg-gray-100 dark:bg-primary-1600" style="display2: none;">
+                    .....
+                </div>
+                <!-- Sidebar -->
+                <div class="flex-1 h-full overflow-x-hidden overflow-y-auto">
+                    <div class="w-full">
+                        <div id="iHeader" class="row bg-primary-100 dark:bg-primary-1600">
+                            <div style="display: flex; justify-content: space-between; align-items: right; padding: 0px;">
+                                <div style="background-color2: lightblue; padding: 0px 0px 0px 5px;">
+                                    <table style="border-collapse: collapse;">
+                                                    <tr>
+                                                        <td id="title" class="text-center inline-flex items-center text-lg font-semibold text-[#0D3A5E] dark:text-primary-1000" style="padding: 5px 0px 0px 12px;">
+															<i data-lucide="message-square-more" class="w-6 h-6 mr-2"></i>
+															Send Feedback - Suggest a Feature
+														</td>
+                                                    </tr>
+                                                    </table>
+                                    <!--
+								  <table>
+								  <tr>
+								  <td rowspan="2" style="padding2: 3px;"><img id="scanimage" src="../logo-v1.png" style="width: 54px; height: 54px;"></td>
+								  <td id="appBigTitle" style="padding: 0px 0px 0px 15px; font-family: mybigtitlefont; font-size: 30px; color: #000;">Stop Windows Update</td>
+								  </tr>
+								  <tr>
+								  <td id="appSmallTitle" style="padding: 0px 0px 0px 15px;">Control Windows Update Service and Automatic Startup</td>
+								  </tr>
+								  </table>
+								  -->
+                                </div>
+                                <div style="background-color2: black; padding: 0px; display: none; justify-content: space-between; align-items: center;">
+                                    <table>
+                                        <tr>
+                                            <td>
+                                                <nav id="mustButtons" aria-label="Secondary" class="flex items-center">
+                                                    <!-- Toggle dark theme button -->
+                                                    <!-- p-2 transition-colors duration-200 rounded-full text-primary-500 bg-primary-500 hover:text-primary hover:bg-primary-100 dark:hover:text-400 dark:hover:bg-primary-600 dark:bg-600 focus:outline-none focus:bg-primary-100 dark:focus:bg-primary-600 focus:ring-primary-700 -->
+                                                    <!-- Settings button -->
+
+                                                    <button id="buttonTheme" aria-hidden="true" class="noCursor relative focus:outline-none" x-cloak @click="toggleTheme" style="padding-top: 5px; padding-bottom: 5px;">
+                                                        <div
+                                                            class="w-11 h-5 transition rounded-full outline-none bg-gray-200 dark:bg-purple-400 border dark:border-gray-500 border-slate-300"
+                                                            style="margin-right: 5px; margin-top: 0px;"
+                                                        ></div>
+                                                        <!-- 
+                                                    														   <input id="startcheckwhenopencheckbox" type="checkbox" class="peer appearance-none w-11 h-5 bg-slate-200 rounded-full border dark:bg-gray-700 dark:border-slate-900 border-gray-300 dark:checked:border-gray-500 dark:checked:bg-purple-600  checked:border-gray-400 checked:bg-primary-800 transition-colors duration-300" />
+                                                    															<label for="startcheckwhenopencheckbox" class="absolute top-0 left-0 w-5 h-5 dark:bg-gray-600 bg-white rounded-full border dark:peer-checked:bg-purple-300 dark:peer-checked:border-purple-700 peer-checked:border-blue-500 dark:border-slate-800 border-slate-300 shadow-sm transition-transform duration-300 peer-checked:translate-x-6 ">
+                                                    														   absolute top-0 left-0 w-5 h-5 dark:bg-gray-600 bg-white rounded-full border dark:peer-checked:bg-purple-300 dark:peer-checked:border-purple-700 peer-checked:border-blue-500 dark:border-slate-800 border-slate-300 shadow-sm transition-transform duration-300 peer-checked:translate-x-6 -->
+                                                        <div
+                                                            class="absolute top-1s left-0 inline-flex items-center justify-center w-5 h-5 border dark:border-gray-500 border-slate-300 transition-all duration-300 transform scale-110 rounded-full shadow-sm"
+                                                            style2="margin-top: 8px;"
+                                                            :class="{ 'translate-x-0 -translate-y-px  text-gray-500 bg-gray-100 lightdiv': !isDark, 'translate-x-6 text-rose-100 bg-purple-500 border-gray-500 darkdiv': isDark }"
+                                                        >
+                                                            <svg x-show="!isDark" id="buttonLiteDark-dark-icon" class="w-5 h-5" style="margin-top: 4px; margin-left: 1.2px;" fill="currentColor" viewBox="0 0 130 130">
+                                                                <path
+                                                                    d="M96.371,59.349a3.2,3.2,0,0,0-3.946.618,37.08,37.08,0,1,1-52.387-52.4,3.211,3.211,0,0,0-3.1-5.435,49.321,49.321,0,0,0-25.049,17.4A48.952,48.952,0,0,0,50.952,98a48.519,48.519,0,0,0,29.512-9.895A49.361,49.361,0,0,0,97.869,63.05,3.2,3.2,0,0,0,96.371,59.349Z"
+                                                                />
+                                                                <path
+                                                                    d="M43.282,34.257,52.876,41.2,49.2,52.449a3.714,3.714,0,0,0,5.716,4.159l9.565-6.979,9.573,6.984a3.714,3.714,0,0,0,5.709-4.162L76.083,41.2l9.595-6.944a3.714,3.714,0,0,0-2.19-6.721l-11.834.023L68.017,16.293l0-.009a3.716,3.716,0,0,0-7.072.009L57.305,27.558l-11.838-.023a3.714,3.714,0,0,0-2.185,6.722Z"
+                                                                />
+                                                            </svg>
+                                                            <svg x-show="isDark" id="buttonLiteDark-light-icon" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" style="margin-top: 4px; padding: 1px;" viewBox="0 0 95 120" fill="currentColor" x="0px" y="0px">
+                                                                <path
+                                                                    fill-rule="evenodd"
+                                                                    clip-rule="evenodd"
+                                                                    d="M46 9C46 6.79086 47.7909 5 50 5C52.2091 5 54 6.79086 54 9V19C54 21.2091 52.2091 23 50 23C47.7909 23 46 21.2091 46 19V9ZM70 50C70 61.0457 61.0457 70 50 70C38.9543 70 30 61.0457 30 50C30 38.9543 38.9543 30 50 30C61.0457 30 70 38.9543 70 50ZM81.8198 18.18C80.2577 16.6179 77.725 16.6179 76.1629 18.18L69.0918 25.2511C67.5297 26.8132 67.5297 29.3458 69.0918 30.9079C70.6539 32.47 73.1866 32.47 74.7487 30.9079L81.8198 23.8368C83.3819 22.2747 83.3819 19.7421 81.8198 18.18ZM91 46C93.2091 46 95 47.7909 95 50C95 52.2091 93.2091 54 91 54H81C78.7909 54 77 52.2091 77 50C77 47.7909 78.7909 46 81 46H91ZM81.8198 81.8196C83.3819 80.2575 83.3819 77.7249 81.8198 76.1628L74.7487 69.0917C73.1866 67.5296 70.6539 67.5296 69.0918 69.0917C67.5297 70.6538 67.5297 73.1865 69.0918 74.7486L76.1629 81.8196C77.725 83.3817 80.2577 83.3817 81.8198 81.8196ZM46 81C46 78.7909 47.7909 77 50 77C52.2091 77 54 78.7909 54 81V91C54 93.2091 52.2091 95 50 95C47.7909 95 46 93.2091 46 91V81ZM30.9081 69.0921C29.346 67.53 26.8134 67.53 25.2513 69.0921L18.1802 76.1632C16.6181 77.7253 16.6181 80.2579 18.1802 81.82C19.7423 83.3821 22.275 83.3821 23.8371 81.82L30.9081 74.749C32.4702 73.1869 32.4702 70.6542 30.9081 69.0921ZM19 46C21.2091 46 23 47.7909 23 50C23 52.2091 21.2091 54 19 54H9C6.79086 54 5 52.2091 5 50C5 47.7909 6.79086 46 9 46H19ZM30.9081 30.908C32.4702 29.3459 32.4702 26.8133 30.9081 25.2512L23.8371 18.1801C22.275 16.618 19.7423 16.618 18.1802 18.1801C16.6181 19.7422 16.6181 22.2749 18.1802 23.8369L25.2513 30.908C26.8134 32.4701 29.346 32.4701 30.9081 30.908Z"
+                                                                />
+                                                            </svg>
+                                                        </div>
+                                                    </button>
+                                                    <button
+                                                        id="buttonColoredLite"
+                                                        type="button"
+                                                        class="interactive-element noCursor pl-4 pr-4 py-1 font-medium text-sm text-center inline-flex items-center dark:bg-primary-1600 dark:text-gray-200 dark:hover:text-gray-200 dark:hover:bg-[#6B7280] hover:text-gray-800 text-primary-1600 hover:bg-primary-1200 bg-primary-100 focus:outline-none rounded-sm"
+                                                        style="--active-bg: var(--color-primary-007); --active-bg-dark: var(--color-[#9CA3AF]); padding-top: 5px; padding-bottom: 5px;"
+                                                    >
+                                                        <svg id="buttonColored-icon" class="hidden w-7 h-5" viewBox="0 0 16.00 16.00" xmlns="http://www.w3.org/2000/svg" fill="#A955F7">
+                                                            <g id="SVGRepo_bgCarrier" stroke-width="0" />
+                                                            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" stroke="#CCCCCC" stroke-width="0.096" />
+                                                            <g id="SVGRepo_iconCarrier">
+                                                                <path d="M10.5 10.5c.002 2.762-2.237 5-5 5s-5.002-2.238-5-5c-.002-2.76 2.237-5 5-5s5.002 2.24 5 5z" color="#000000" fill="#ff15a1" stroke="#373737" stroke-width="0.144" />
+                                                                <path d="M8 1.401a4.998 4.998 0 0 0-2.488 9.334c-.004-.078-.012-.155-.012-.234a4.998 4.998 0 0 1 7.488-4.334A4.994 4.994 0 0 0 8 1.4z" fill="#1583ff" />
+                                                                <path d="M10.5 5.5a4.998 4.998 0 0 0-5 5c0 .08.008.157.012.235A4.998 4.998 0 0 0 13 6.401c0-.079-.008-.156-.012-.234A4.975 4.975 0 0 0 10.5 5.5z" fill="#00cf2d" />
+                                                                <path d="M12.988 6.167c.004.078.012.155.012.234a4.998 4.998 0 0 1-7.489 4.334 4.994 4.994 0 0 0 4.989 4.766 4.998 4.998 0 0 0 2.488-9.334z" fill="#f8ff15" />
+                                                                <path d="M5.512 10.735a4.996 4.996 0 0 0 2.486 4.093 4.987 4.987 0 0 0 2.49-4.091A4.978 4.978 0 0 1 8 11.4a4.975 4.975 0 0 1-2.488-.666z" fill="#ef0000" />
+                                                                <path d="M7.998 6.173A4.991 4.991 0 0 0 5.5 10.5c0 .079.008.156.012.234a4.978 4.978 0 0 0 4.977.002c.003-.079.011-.157.011-.236a4.99 4.99 0 0 0-2.502-4.328z" fill="#383027" />
+                                                                <path
+                                                                    d="M5.5 5.5c-.91 0-1.76.247-2.494.67a4.99 4.99 0 0 0 2.506 4.564c-.004-.077-.012-.154-.012-.233a4.991 4.991 0 0 1 2.498-4.328A4.975 4.975 0 0 0 5.5 5.5z"
+                                                                    fill="#5100cc"
+                                                                />
+                                                                <path
+                                                                    d="M8 1.401a4.998 4.998 0 0 0-4.994 4.77 4.998 4.998 0 1 0 4.992 8.658 4.998 4.998 0 1 0 4.99-8.662A4.994 4.994 0 0 0 8 1.4z"
+                                                                    fill="none"
+                                                                    stroke="#373737"
+                                                                    stroke-width="0.144"
+                                                                />
+                                                            </g>
+                                                        </svg>
+                                                        <svg id="buttonLite-icon" class="hidden w-7 h-5" viewBox="0 0 24 24" fill="#ffffff" xmlns="http://www.w3.org/2000/svg">
+                                                            <g id="SVGRepo_bgCarrier" stroke-width="0" />
+                                                            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" />
+                                                            <g id="SVGRepo_iconCarrier">
+                                                                <circle cx="12" cy="12" r="9" stroke="#6B7280" stroke-width="2" />
+                                                                <path
+                                                                    d="M18.364 5.63604C16.6761 3.94821 14.3869 3 12 3C9.61305 3 7.32387 3.94821 5.63604 5.63604C3.94821 7.32387 3 9.61305 3 12C3 14.3869 3.94821 16.6761 5.63604 18.364L12 12L18.364 5.63604Z"
+                                                                    fill2="#6B7280"
+                                                                    class="dark:fill-semiblack fill-gray-500"
+                                                                />
+                                                            </g>
+                                                        </svg>
+                                                    </button>
+                                                    <button
+                                                        id="buttonHelp"
+                                                        type="button"
+                                                        class="interactive-element noCursor pl-2 pr-4 py-1 font-medium text-sm text-center inline-flex items-center dark:bg-primary-880 dark:text-gray-200 dark:hover:text-gray-200 dark:hover:bg-primary-888 hover:text-primary-600 text-primary-440 border2 border-slate-300 hover:bg-primary-444 bg-primary-707 focus:outline-none rounded-sm"
+                                                        style="
+                                                            cursor: default;
+                                                            height: 30px;
+                                                            margin-left: 0.9px;
+                                                            margin-right: 0.9px;
+                                                            --active-bg: var(--color-primary-222);
+                                                            --active-bg-dark: var(--color-primary-808);
+                                                            padding-top: 5px;
+                                                            padding-bottom: 5px;
+                                                        "
+                                                    >
+                                                        <svg class="w-7 h-5" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                                                            <path
+                                                                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"
+                                                            />
+                                                        </svg>
+                                                        <span class="font-semibold">Help</span>
+                                                    </button>
+                                                    <button
+                                                        id="buttonSettings"
+                                                        type="button"
+                                                        class="interactive-element noCursor pl-3 pr-4 py-1 font-medium text-sm text-center inline-flex items-center dark:text-gray-100 dark:hover:text-gray-200 dark:bg-primary-990 dark:hover:bg-primary-999 hover:text-primary-200 text-primary-220 hover:bg-primary-900 bg-primary-800 focus:outline-none rounded-sm"
+                                                        style="cursor: default; margin-right: 0.17px; --active-bg: var(--color-primary-700); --active-bg-dark: var(--color-primary-770); padding-top: 5px; padding-bottom: 5px;"
+                                                    >
+                                                        <svg class="w-7 h-5" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 560 560" style="padding-top: 2px;">
+                                                            <path
+                                                                d="M496.851,212.213l-48.806-12.201c-4.106-14.108-9.722-27.572-16.666-40.205l25.89-43.151 c4.722-7.869,3.482-17.943-3.008-24.432l-34.485-34.485c-6.489-6.49-16.563-7.729-24.432-3.008l-43.151,25.89 c-12.633-6.944-26.097-12.56-40.205-16.666l-12.201-48.805C297.561,6.246,289.562,0,280.384,0h-48.769 c-9.177,0-17.177,6.246-19.403,15.149l-12.201,48.805c-14.108,4.106-27.572,9.722-40.205,16.666l-43.151-25.89 c-7.87-4.722-17.943-3.482-24.432,3.008L57.738,92.223c-6.489,6.489-7.729,16.562-3.008,24.432l25.89,43.151 c-6.944,12.633-12.56,26.097-16.666,40.205l-48.806,12.201C6.246,214.438,0,222.438,0,231.615v48.769 c0,9.177,6.246,17.177,15.149,19.403l48.806,12.201c4.106,14.108,9.722,27.572,16.666,40.205l-25.89,43.151 c-4.722,7.869-3.482,17.943,3.008,24.432l34.485,34.485c6.489,6.49,16.563,7.729,24.432,3.008l43.151-25.89 c12.633,6.944,26.097,12.56,40.205,16.666l12.201,48.805c2.226,8.903,10.225,15.149,19.403,15.149h48.769 c9.177,0,17.177-6.246,19.403-15.149l12.201-48.805c14.108-4.106,27.572-9.722,40.205-16.666l43.151,25.89 c7.87,4.722,17.943,3.482,24.432-3.008l34.485-34.485c6.489-6.489,7.729-16.562,3.008-24.432l-25.89-43.151 c6.944-12.633,12.56-26.097,16.666-40.205l48.806-12.201c8.903-2.226,15.149-10.226,15.149-19.403v-48.769 C512,222.438,505.754,214.438,496.851,212.213z M256,336c-44.112,0-80-35.888-80-80s35.888-80,80-80s80,35.888,80,80 S300.112,336,256,336z"
+                                                            />
+                                                        </svg>
+                                                        <span class="font-semibold">Settings</span>
+                                                    </button>
+                                                    <button
+                                                        id="buttonMinimize"
+                                                        type="button"
+                                                        class="interactive-element noCursor pl-5 pr-5 py-1 font-medium text-sm text-center inline-flex items-center dark:text-gray-100 dark:hover:text-gray-200 dark:bg-primary-990 dark:hover:bg-primary-999 hover:text-primary-200 text-primary-220 hover:bg-primary-900 bg-primary-800 focus:outline-none rounded-sm"
+                                                        style="cursor: default; margin-right: 0.9px; --active-bg: var(--color-primary-700); --active-bg-dark: var(--color-primary-770); padding-top: 5px; padding-bottom: 5px;"
+                                                    >
+                                                        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14" />
+                                                        </svg>
+                                                    </button>
+                                                    <button
+                                                        id="buttonClose"
+                                                        type="button"
+                                                        class="noCursor pl-5 pr-6 py-1 font-medium text-sm text-center inline-flex items-center dark:text-white dark:hover:text-white dark:active:bg-red-400 dark:bg-red-700 active:bg-red-400 dark:hover:bg-[var(--red2-2)] hover:text-white text-white bg-primary-400 hover:bg-primary-500 focus:outline-none rounded-sm"
+                                                        style="cursor: default; padding-top: 5px; padding-bottom: 5px;"
+                                                    >
+                                                        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 17.94 6M18 18 6.06 6" />
+                                                        </svg>
+                                                    </button>
+                                                </nav>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                            <!-- /.col -->
+                        </div>
+                        <!-- Desktop navbar -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- All javascript code in this project for now is just for demo DON'T RELY ON IT  -->
+        <!--Datatables -->
+        <script>
+		
+		const currentThemes = JSON.parse(window.localStorage.getItem("dark")) || false; // الوضع الحالي
+					const loadingElement = document.getElementById('loadings');
+					
+					if(currentThemes) {
+						//alert(currentThemes);
+						loadingElement.classList.remove('bg-[#E1EAF1]'); // هذا هو الصنف الذي يُعطي اللون الأصلي
+						loadingElement.classList.remove('text-gray-500'); // هذا هو الصنف الذي يُعطي اللون الأصلي
+						loadingElement.classList.add('bg-[#232F3F]'); // يمكنك تغيير 'red' إلى أي لون آخر
+						loadingElement.classList.add('text-[#57C3EA]'); // يمكنك تغيير 'red' إلى أي لون آخر
+					} else {
+						//loadingElement.classList.remove('bg-[#E1EAF1]'); // هذا هو الصنف الذي يُعطي اللون الأصلي
+						//loadingElement.classList.remove('text-gray-500'); // هذا هو الصنف الذي يُعطي اللون الأصلي
+						loadingElement.classList.add('bg-[#FFF0F5]'); // يمكنك تغيير 'red' إلى أي لون آخر
+						//loadingElement.classList.add('text-[#57C3EA]'); // يمكنك تغيير 'red' إلى أي لون آخر
+					}
+		
+			lucide.createIcons();
+			
+			
+
+            const themeToggleColorBtn = document.getElementById("buttonColoredLite");
+            themeToggleColorBtn.addEventListener("click", function () {
+                /*
+         	let cColor = localStorage.getItem('color');
+         	if (!cColor || (cColor !== 'colored' && cColor !== 'lite')) {
+         		cColor = 'colored'; // Set a default value if not found
+         	}
+         	setColors(cColor === 'lite' ? 'colored' : 'lite');
+         	*/
+
+                // toggle icons inside button
+                const cColor = localStorage.getItem("color");
+                //window.localStorage.setItem('color', color)
+                //alert(cColor);
+                if (cColor != "colored" && cColor != "lite") {
+                    //alert('new color: colored');
+                    setColors("colored");
+                } else {
+                    if (cColor == "lite") {
+                        //alert('color: colored');
+                        setColors("colored");
+                    } else if (cColor == "colored") {
+                        //alert('color: lite');
+                        setColors("lite");
+                    }
+                }
+            });
+
+            //setColors('colored'); - setColors('lite');
+            const setColors = (color) => {
+                //alert(color);
+                const themeToggleColoredIcon = document.getElementById("buttonColored-icon");
+                const themeToggleNormalIcon = document.getElementById("buttonLite-icon");
+                const iHeaderDiv = document.getElementById("iHeader");
+                const listViewAllDiv = document.getElementById("listViewAllDiv"); // Replace with your element's ID
+
+                if (themeToggleColoredIcon && themeToggleNormalIcon) {
+                    // Check if elements exist
+                    if (color == "colored") {
+                        themeToggleNormalIcon.classList.remove("hidden");
+                        themeToggleColoredIcon.classList.add("hidden");
+                        //themeToggleNormalIcon.classList.toggle('hidden', color === 'colored');
+                        //themeToggleColoredIcon.classList.toggle('hidden', color === 'lite');
+                    } else if (color == "lite") {
+                        themeToggleColoredIcon.classList.remove("hidden");
+                        themeToggleNormalIcon.classList.add("hidden");
+                        //themeToggleNormalIcon.classList.toggle('hidden', color === 'colored');
+                        //themeToggleColoredIcon.classList.toggle('hidden', color === 'lite');
+                    }
+                } else {
+                    console.error("One or both icon elements not found!");
+                }
+
+                if (themeToggleButton) {
+                    themeToggleButton.addEventListener("click", toggleTheme);
+                }
+
+                let isDark = window.localStorage.getItem("dark");
+
+                // التحقق من وجود القيمة وتحويلها إلى قيمة منطقية
+                if (isDark !== null) {
+                    isDark = JSON.parse(isDark);
+                } else {
+                    isDark = false; // قيمة افتراضية إذا لم تكن موجودة
+                }
+
+                //alert(color + ' - ' + isDark); // الآن يتم عرض قيمة منطقية
+
+                //toggleShadow(color, isDark);
+
+                const root = document.documentElement;
+                root.style.setProperty("--color-primary-000", `var(--color-${color}-000)`); // primary-000
+				root.style.setProperty("--color-primary-100", `var(--color-${color}-100)`); // primary-100
+				root.style.setProperty("--color-primary-200", `var(--color-${color}-200)`); // primary-200
+				root.style.setProperty("--color-primary-220", `var(--color-${color}-220)`); // primary-220
+				root.style.setProperty("--color-primary-222", `var(--color-${color}-222)`); // primary-222
+				root.style.setProperty("--color-primary-202", `var(--color-${color}-202)`); // primary-202
+				root.style.setProperty("--color-primary-002", `var(--color-${color}-002)`); // primary-002
+				root.style.setProperty("--color-primary-300", `var(--color-${color}-300)`); // primary-300
+				root.style.setProperty("--color-primary-400", `var(--color-${color}-400)`); // primary-400
+				root.style.setProperty("--color-primary-440", `var(--color-${color}-440)`); // primary-440
+				root.style.setProperty("--color-primary-444", `var(--color-${color}-444)`); // primary-444
+				root.style.setProperty("--color-primary-404", `var(--color-${color}-404)`); // primary-404
+				root.style.setProperty("--color-primary-500", `var(--color-${color}-500)`); // primary-500
+				root.style.setProperty("--color-primary-600", `var(--color-${color}-600)`); // primary-600
+				root.style.setProperty("--color-primary-700", `var(--color-${color}-700)`); // primary-700
+				root.style.setProperty("--color-primary-770", `var(--color-${color}-770)`); // primary-770
+				root.style.setProperty("--color-primary-007", `var(--color-${color}-007)`); // primary-007
+				root.style.setProperty("--color-primary-707", `var(--color-${color}-707)`); // primary-707
+				root.style.setProperty("--color-primary-800", `var(--color-${color}-800)`); // primary-800
+				root.style.setProperty("--color-primary-880", `var(--color-${color}-880)`); // primary-880
+				root.style.setProperty("--color-primary-888", `var(--color-${color}-888)`); // primary-888
+				root.style.setProperty("--color-primary-808", `var(--color-${color}-808)`); // primary-808
+				root.style.setProperty("--color-primary-008", `var(--color-${color}-008)`); // primary-008
+				root.style.setProperty("--color-primary-900", `var(--color-${color}-900)`); // primary-900
+				root.style.setProperty("--color-primary-990", `var(--color-${color}-990)`); // primary-990
+				root.style.setProperty("--color-primary-999", `var(--color-${color}-999)`); // primary-999
+				root.style.setProperty("--color-primary-1000", `var(--color-${color}-1000)`); // primary-1000
+				root.style.setProperty("--color-primary-1100", `var(--color-${color}-1100)`); // primary-1100
+				root.style.setProperty("--color-primary-1200", `var(--color-${color}-1200)`); // primary-1200
+				root.style.setProperty("--color-primary-1300", `var(--color-${color}-1300)`); // primary-1300
+				root.style.setProperty("--color-primary-1400", `var(--color-${color}-1400)`); // primary-1400
+				root.style.setProperty("--color-primary-1500", `var(--color-${color}-1500)`); // primary-1500
+				root.style.setProperty("--color-primary-1600", `var(--color-${color}-1600)`); // primary-1600
+				root.style.setProperty("--color-primary-1700", `var(--color-${color}-1700)`); // primary-1700
+                this.selectedColor = color;
+                window.localStorage.setItem("color", color);
+                const currentTheme = JSON.parse(window.localStorage.getItem("dark")) || false; // احصل على الوضع الحالي
+                newTheme(currentTheme, color); // إرسال الوضع واللون
+                //
+            };
+
+            const setup = () => {
+                const getTheme = () => {
+                    if (window.localStorage.getItem("dark")) {
+                        return JSON.parse(window.localStorage.getItem("dark"));
+                    }
+
+                    return !!window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+                };
+
+                const setTheme = (value) => {
+                    window.localStorage.setItem("dark", value);
+                };
+
+                const getColor = () => {
+                    if (window.localStorage.getItem("color")) {
+                        return window.localStorage.getItem("color");
+                    }
+                    return "colored";
+                };
+                /*
+                const updateBarChart = (on) => {
+                    const data = {
+                        data: randomData(),
+                        backgroundColor: "rgb(207, 250, 254)",
+                    };
+                    if (on) {
+                        barChart.data.datasets.push(data);
+                        barChart.update();
+                    } else {
+                        barChart.data.datasets.splice(1);
+                        barChart.update();
+                    }
+                };
+				*/
+                return {
+                    loading: true,
+                    isDark: getTheme(),
+                    toggleTheme() {
+                        this.isDark = !this.isDark;
+                        setTheme(this.isDark);
+                        // استدعاء toggleShadow هنا أيضاً عند تغيير الوضع المظلم
+                        //toggleShadow(getColor(), this.isDark); // هذا هو التعديل المهم
+                    },
+                    setLightTheme() {
+                        this.isDark = false;
+                        setTheme(this.isDark);
+                        // استدعاء toggleShadow هنا أيضاً عند تغيير الوضع المظلم
+                        //toggleShadow(getColor(), this.isDark); // هذا هو التعديل المهم
+                    },
+                    setDarkTheme() {
+                        this.isDark = true;
+                        setTheme(this.isDark);
+                        // استدعاء toggleShadow هنا أيضاً عند تغيير الوضع المظلم
+                        //toggleShadow(getColor(), this.isDark); // هذا هو التعديل المهم
+                    },
+                    color: getColor(),
+                    selectedColor: "colored",
+                    setColors,
+                };
+            };
+
+            // دالة لتبديل الوضع (Dark/Light Mode) وتحديث التخزين المحلي
+            const toggleTheme = () => {
+                const currentTheme = JSON.parse(window.localStorage.getItem("dark")) || false; // الوضع الحالي
+                const isNowDarkTheme = !currentTheme; // عكس الوضع
+                //newTheme(isNowDarkTheme); // استدعاء newTheme مع السياق الصحيح
+
+                const currentColor = window.localStorage.getItem("color") || "colored"; // احصل على اللون الحالي
+                newTheme(isNowDarkTheme, currentColor); // إرسال الوضع واللون
+                //alert(currentColor);
+                //newTheme(isNowDarkTheme, currentColor); // إرسال الوضع واللون
+                //window.localStorage.setItem("dark", JSON.stringify(isNowDarkTheme)); // تخزين الوضع الجديد
+            };
+
+            function newTheme(newThemeValue, colorValue) {
+                //alert(newThemeValue);
+                if (newThemeValue === true || newThemeValue === false) {
+                    // تحقق من أن القيمة منطقية
+                    this.isDark = newThemeValue; // تحديث حالة الوضع الليلي/النهاري
+                    window.localStorage.setItem("dark", JSON.stringify(this.isDark)); // تخزين القيمة في التخزين المحلي
+                    //setColors("colored"); // تخزين اللون الحالي
+
+                    // الحصول على اللون الحالي
+                    const currentColor = window.localStorage.getItem("color") || "colored";
+                    // إرسال رسالة إلى backBody
+                    if (window.chrome && window.chrome.webview) {
+                        window.chrome.webview.postMessage(
+                            JSON.stringify({
+                                type: "theme.Changed",
+                                value: newThemeValue,
+                                color: currentColor,
+                            })
+                        );
+                    } else {
+                        console.error("chrome.webview غير متوفر. قد تكون الصفحة لا تعمل داخل WebView2.");
+                    }
+                    // هنا يمكنك إضافة تحديثات أخرى للتنسيق، مثل تغيير الألوان
+                } else {
+                    console.error("قيمة غير صحيحة للوضع الليلي/النهاري:", newThemeValue);
+                }
+            }
+
+            // إضافة مستمع للنقر على زر تبديل الوضع
+            const themeToggleButton = document.getElementById("buttonTheme");
+            if (themeToggleButton) {
+                themeToggleButton.addEventListener("click", toggleTheme);
+            } else {
+                console.error("Theme toggle button not found!");
+            }
+
+            // تحديد جميع العناصر التي تحمل الكلاس "interactive-element"
+            const interactiveElements = document.querySelectorAll(".interactive-element");
+
+            // المرور على كل عنصر من العناصر المحددة
+            interactiveElements.forEach((element) => {
+                // إضافة مُستمع حدث "mousedown" (الضغط على زر الفأرة)
+                element.addEventListener("mousedown", () => {
+                    // قراءة قيمة وضع الظلام من localStorage وتعيين قيمة افتراضية false إذا لم تكن موجودة
+                    const isDarkMode = JSON.parse(window.localStorage.getItem("dark")) || false;
+
+                    // الحصول على قيم المتغيرات CSS المخصصة (Custom Properties/CSS Variables)
+                    const activeBg = getComputedStyle(element).getPropertyValue("--active-bg"); // لون الخلفية في الوضع الفاتح
+                    const activeBgDark = getComputedStyle(element).getPropertyValue("--active-bg-dark"); // لون الخلفية في الوضع الداكن
+
+                    // تعيين لون الخلفية بناءً على وضع الظلام، مع التحقق من وجود قيم المتغيرات
+                    element.style.setProperty("background-color", isDarkMode && activeBgDark ? activeBgDark : activeBg);
+
+                    // شرح إضافي:
+                    // العامل الثلاثي (isDarkMode && activeBgDark ? activeBgDark : activeBg) يعمل كالتالي:
+                    // 1. يتم التحقق أولاً من قيمة isDarkMode، ثم يتم التحقق من وجود قيمة ل activeBgDark.
+                    // 2. إذا كان كلاهما صحيحًا (وضع الظلام مُفعَّل والمتغير موجود)، يتم استخدام قيمة activeBgDark.
+                    // 3. إذا كان أحدهما أو كلاهما خطأ، يتم استخدام قيمة activeBg.
+                    // هذا يمنع حدوث أخطاء إذا لم يتم تعريف المتغير --active-bg-dark في CSS.
+                });
+
+                // إضافة مُستمع حدث "mouseup" (رفع زر الفأرة)
+                element.addEventListener("mouseup", () => {
+                    // إزالة خاصية لون الخلفية لإعادة اللون الأصلي المحدد في CSS
+                    element.style.removeProperty("background-color");
+
+                    // شرح إضافي:
+                    // استخدام removeProperty('background-color') هو الأفضل هنا، لأنه يعيد لون الخلفية إلى القيمة المُحددة في CSS (سواء كانت من خلال Tailwind CSS أو أي أنماط أخرى).
+                    // تعيين backgroundColor = '' له نفس التأثير في معظم الحالات، ولكنه قد لا يعمل بشكل صحيح في بعض الحالات المعقدة.
+                });
+
+                // إضافة مُستمع حدث "mouseleave" (خروج مؤشر الفأرة من العنصر)
+                element.addEventListener("mouseleave", () => {
+                    // إزالة خاصية لون الخلفية لإعادة اللون الأصلي المحدد في CSS (نفس السبب كما في mouseup)
+                    element.style.removeProperty("background-color");
+                });
+            });
+			
+			
+			function changeHeaderToReport() {
+				//alert();
+				document.getElementById('title').innerHTML = '<i data-lucide="message-square-warning" class="w-6 h-6 mr-2"></i>Send Feedback - Report a Problem';
+			}
+			document.addEventListener("DOMContentLoaded", function () {
+			
+				// دالة لجلب قيمة اللون من localStorage. إذا لم تكن موجودة، تُرجع القيمة الافتراضية "colored".
+				const getColor = () => window.localStorage.getItem("color") || "colored";
+
+				// مصفوفة تحتوي على معلومات الأزرار: id (معرف العنصر في HTML) و originalText (النص الأصلي أو القيمة التي سيتم إرسالها).
+				const labels = [
+					{ id: "buttonClose", originalText: "Close" }, // زر الإغلاق
+					{ id: "buttonMinimize", originalText: "Minimize" }, // زر التصغير
+					{ id: "buttonSettings", originalText: "Edit Settings" }, // زر الإعدادات
+					{ id: "buttonHelp", originalText: "More about App" }, // زر المساعدة
+					{ id: "buttonColoredLite", originalText: getColor() }, // زر اللون/الوضع (يتم جلب القيمة من localStorage)
+					{ id: "buttonLiteDark-light-icon", originalText: "Light Mode" }, // زر الوضع الفاتح
+					{ id: "buttonLiteDark-dark-icon", originalText: "Dark Mode" }, // زر الوضع الداكن
+				];
+
+				// المرور على كل عنصر في مصفوفة labels.
+				labels.forEach((label) => {
+					// جلب العنصر من DOM باستخدام معرفه (id).
+					const element = document.getElementById(label.id);
+
+					// التحقق من وجود العنصر في DOM.
+					if (element) {
+						// إضافة مستمعين للأحداث (mouseover, mouseout, click) لكل زر.
+						element.addEventListener("mouseover", () => {
+							// عند تحريك مؤشر الماوس فوق الزر:
+							// يتم إرسال رسالة إلى webView2.
+							// إذا كان الزر هو "buttonColoredLite"، يتم إرسال قيمة اللون من localStorage.
+							// خلاف ذلك، يتم إرسال النص الأصلي (originalText).
+							sendMessage("mouse.over", label.id, label.id === "buttonColoredLite" ? getColor() : label.originalText);
+						});
+
+						element.addEventListener("mouseout", () => {
+							// عند تحريك مؤشر الماوس خارج الزر:
+							// نفس المنطق كما في mouseover.
+							sendMessage("mouse.out", label.id, label.id === "buttonColoredLite" ? getColor() : label.originalText);
+						});
+
+						element.addEventListener("click", () => {
+							// عند النقر على الزر:
+							// نفس المنطق كما في mouseover و mouseout.
+							sendMessage("button.click", label.id, label.id === "buttonColoredLite" ? getColor() : label.originalText);
+						});
+					} else {
+						// إذا لم يتم العثور على العنصر، يتم تسجيل خطأ في وحدة التحكم (Console).
+						console.error(`العنصر ذو المعرف ${label.id} غير موجود.`);
+					}
+				});
+			});
+			
+			// دالة مُوحّدة لإرسال الرسائل مع معالجة الأخطاء
+			function sendMessage(eventType, targetId, message) { // قيمة افتراضية للرسالة
+				try {
+					const messageObject = {
+						type: eventType,
+						target: targetId,
+						jmessage: message // إضافة الرسالة الاختيارية
+					};
+					console.log(JSON.stringify(messageObject, null, 2)); // طباعة JSON للتأكد من صحته
+					window.chrome.webview.postMessage(JSON.stringify(messageObject));
+				} catch (error) {
+					console.error("خطأ في إرسال الرسالة:", error);
+				}
+			}
+			
+			
+
+            /*
+			if (pausecheckButton) {
+				pausecheckButton.addEventListener('click', function() {
+					const message = JSON.stringify({
+						type: 'button',
+						id: 'pausecheckbutton',
+						message: 'تم الضغط على زر Pause Check!'
+					});
+					window.chrome.webview.postMessage(message);
+				});
+			}
+			*/
+
+			
+			
+			
+			
+			
+			
+			
+			
+			// استلام الرسائل من WebView2
+			window.chrome.webview.addEventListener('message', event => {
+
+			  try {
+				//const data = JSON.parse(event.data); // تحليل البيانات
+				const data = JSON.parse(event.data);
+				console.log("البيانات المستلمة:", data); // طباعة الكائن بالكامل للتأكد
+			
+			
+			} catch (error) {
+				console.error("خطأ في تحليل JSON:", error); // مهم جداً لكشف أي أخطاء
+				console.error("البيانات المستلمة الخام:", event.data); // طباعة البيانات الخام للمساعدة في تصحيح الأخطاء
+			  }
+			});
+        </script>
+    </body>
+</html>
