@@ -1,0 +1,2318 @@
+using Microsoft.Web.WebView2.Core;
+using System;
+using System.Collections.Generic;
+using System.Data.SQLite;
+using System.Diagnostics;
+using System.Drawing;
+using System.IO;
+using System.Net.Http;
+using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Net.Http.Headers;
+using Newtonsoft.Json.Linq; // تأكد من إضافة هذه المكتبة إذا لم تكن موجودة
+using WebView2 = Microsoft.Web.WebView2.WinForms.WebView2;
+using System.Text.RegularExpressions;
+using System.Linq;
+using Newtonsoft.Json;
+using System.Security.Cryptography;
+
+namespace SAWU_Update
+{
+    public partial class Update : Form
+    {
+        // Add the missing ReleaseCapture method
+        [DllImport("user32.DLL", EntryPoint = "ReleaseCapture")]
+        private extern static void ReleaseCapture();
+
+        private Timer tooltipTimer;
+        private string currentTooltipMessage;
+        private Point currentTooltipPosition;
+        private bool isTooltipVisible = false; // حالة عرض الـ Tooltip
+        private bool isHandlingClick = false; // متغير لتتبع حالة معالجة النقرة
+
+        private int maxBorderSizeTop = 0;
+        private int maxBorderSizeRight = 0;
+        private int maxBorderSizeLeft = 0;
+        private int maxBorderSizeBottom = 0;
+        private int minBorderSizeTop = 4;
+        private int minBorderSizeLeft = 20;
+        private int minBorderSizeRight = 20;
+        private int minBorderSizeBottom = 18;
+
+        private CustomToolTip tip;
+
+        string webViewBackBackUrl = Path.GetFullPath(
+            Path.Combine(AppContext.BaseDirectory, @"webp/public/settingsformback.html")
+        );
+        string webViewUpdateUrl = Path.GetFullPath(
+            Path.Combine(AppContext.BaseDirectory, @"webp/public/updateapp.html")
+        );
+        string webViewHeaderUrl = Path.GetFullPath(
+            Path.Combine(AppContext.BaseDirectory, @"webp/public/updateheader.html")
+        );
+        string webViewTopHeaderButtonsUrl = Path.GetFullPath(
+            Path.Combine(AppContext.BaseDirectory, @"webp/public/viewhelptopheaderbuttonsp.html")
+        );
+
+        // متغير ثابت لتتبع النسخة الوحيدة المفتوحة من UpdateForm
+        private static Update _instance;
+
+        // دالة ثابتة للحصول على النسخة المفتوحة من UpdateForm أو إنشاء نسخة جديدة إذا لم تكن موجودة
+        internal static Update Instance()
+        {
+            // إذا لم تكن هناك نسخة مفتوحة بعد، قم بإنشاء نسخة جديدة
+            if (_instance == null || _instance.IsDisposed)
+            {
+                _instance = new Update();
+            }
+            return _instance; // إرجاع النسخة المفتوحة (أو التي تم إنشاؤها حديثًا)
+        }
+
+        // Tooltips
+        private string buttonClose_Tooltip = "Close Dialog";
+        private string buttonMinimize_Tooltip = "Minimize";
+        private string buttonSettings_Tooltip = "Edit Settings";
+        private string buttonHelp_Tooltip = "More About App";
+        private string buttonLite_Tooltip = "Toggle Lite Theme";
+        private string buttonColored_Tooltip = "Toggle Colored Theme";
+        private string buttonLiteDarkLight_Tooltip = "Switch Light Mode";
+        private string buttonLiteDarkDark_Tooltip = "Switch Dark Mode";
+        private bool startOnStartup;
+        private bool playSound;
+        private bool autoDisable;
+        private bool playCongrats;
+        private string dialogResult;
+        private string apptheme;
+        private int ifArrangeControls = 0;
+        private string getUser_id;
+        private static string helpLanguage;
+        private bool isClosing = false; // متغير حالة لتتبع إعادة التشغيل
+
+        private LoadingBlur _loadingBlur;
+        private Dictionary<string, WebView2> webViews = new Dictionary<string, WebView2>();
+        private string thisTitle;
+        private string myData;
+        private string releaseDate;
+        private string formattedChangeLog;
+        private string programTitle;
+        private string programDescription;
+        private string productName;
+        private string versionNumber;
+        private byte[] bytebuffer;
+        private byte[] buffer;
+        private const string databaseFile = "settings.db"; // اسم قاعدة البيانات
+        string yourAccessToken = "asd"; // استبدل برمز الوصول الشخصي الخاص بك
+
+        private string GetAppThemeFromDatabase()
+        {
+            using (var connection = new SQLiteConnection($"Data Source={databaseFile};Version=3;"))
+            {
+                try
+                {
+                    connection.Open();
+                    string query = "SELECT apptheme FROM Settings LIMIT 1;";
+                    using (var command = new SQLiteCommand(query, connection))
+                    {
+                        object result = command.ExecuteScalar();
+                        Console.WriteLine($"Result from database apptheme: {result}"); // عرض القيمة المسترجعة
+
+                        if (result != null)
+                        {
+                            // إذا كانت القيمة نصية بالفعل
+                            if (result is string stringValue)
+                            {
+                                Console.WriteLine($"String Value: {stringValue}");
+                                return stringValue; // أعد القيمة النصية مباشرةً
+                            }
+                            // إذا كانت القيمة عدد صحيح
+                            else if (int.TryParse(result.ToString(), out int intValue))
+                            {
+                                Console.WriteLine($"Parsed Integer Value: {intValue}");
+                                return intValue == 1 ? "true" : "false"; // تحويل القيمة إلى "true" أو "false"
+                            }
+                            else
+                            {
+                                Console.WriteLine("Failed to parse the value.");
+                                return result.ToString(); // أعد القيمة كنص إذا لم تكن ممكنة التحويل
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("No result returned from database.");
+                            return "null"; // إرجاع قيمة افتراضية إذا لم توجد نتيجة
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"An error occurred: {ex.Message}");
+                    return "error"; // إرجاع قيمة خطأ إذا حدثت مشكلة
+                }
+            }
+        }
+
+        public Update()
+        {
+            InitializeComponent();
+            thisTitle = "Stop Automatic Windows Updates - Update";
+            this.Name = thisTitle;
+            // تعيين النمط الافتراضي للتطبيق
+            apptheme = GetAppThemeFromDatabase();
+            //MessageBox.Show("apptheme: " + apptheme);
+
+            if (apptheme == "lite")
+            {
+                //MessageBox.Show("true");
+                //labelLoading.ForeColor = Color.FromArgb(156, 163, 175);
+                //loadingWait.BackColor = Color.FromArgb(225, 234, 241);
+                //this.BackColor = Color.FromArgb(225, 234, 241);
+            }
+            else
+            {
+                //MessageBox.Show("false");
+                //labelLoading.ForeColor = Color.FromArgb(79, 195, 247);
+                //loadingWait.BackColor = Color.FromArgb(35, 47, 63);
+                //this.BackColor = Color.FromArgb(35, 47, 63);
+            }
+            loadingWait.Visible = true;
+            loadingWait.BringToFront();
+
+            webViewBackFirst.SendToBack();
+            webViewTopHeaderButtons.SendToBack();
+            webViewHeader.SendToBack();
+
+            this.Resize += Update_Resize; // مهم جداً لتحديث الترتيب عند تغيير الحجم
+
+            WinAPI.AnimateWindow(this.Handle, 65, WinAPI.CENTER);
+            //WinAPI.AnimateWindow(this.Handle, 33, WinAPI.VER_POSITIVE);
+            (new Core.DropShadow()).ApplyShadows(this, 1);
+
+            // [تهيئة WebView2 بشكل غير متزامن]
+            InitializeWebViewBackBackAsync();
+            InitializeWebView2Async();
+            InitializeWebViewTopHeaderButtonsAsync();
+            // تحميل الصفحات الرئيسية
+            InitializeWebViewHeaderAsync();
+            InitializeWebViewUpdateAsync();
+        }
+
+        private async void InitializeWebView2Async()
+        {
+            // [الانتظار حتى يتم تهيئة بيئة CoreWebView2]
+            await webViewTopHeaderButtons.EnsureCoreWebView2Async(null); // أو يمكنك تمرير بيئة CoreWebView2Options إذا كنت بحاجة إلى تخصيص
+
+            // [بعد التأكد من التهيئة، قم بإرفاق معالج الحدث WebMessageReceived]
+            webViewTopHeaderButtons.WebMessageReceived += WebViewTopHeaderButtons_WebMessageReceived2;
+
+            // [اختياري: يمكنك الآن تحميل الصفحة الأولية أو تنفيذ أي عمليات إعداد أخرى لـ WebView2 بعد التهيئة]
+            // webViewTopHeaderButtons.Source = new Uri("your_initial_page.html");
+
+            //Debug.WriteLine("WebView2 تم تهيئته بنجاح وأصبح معالج WebMessageReceived مرتبطًا."); // تسجيل للتأكيد
+            // MessageBox.Show("WebView2 تم تهيئته بنجاح وأصبح معالج WebMessageReceived مرتبطًا."); // يمكنك استخدام MessageBox مؤقتًا للتحقق إذا أردت
+        }
+
+        private void WebViewTopHeaderButtons_WebMessageReceived2(object sender, CoreWebView2WebMessageReceivedEventArgs e)
+        {
+            //MessageBox.Show("WebViewTopHeaderButtons_WebMessageReceived: تم استقبال رسالة!"); // MessageBox للاختبار - يجب أن يظهر الآن إذا تم التهيئة بشكل صحيح
+            //Debug.WriteLine("WebViewTopHeaderButtons_WebMessageReceived: تم استدعاء المعالج!"); // تسجيل باستخدام Debug.WriteLine
+
+            // محاولة الحصول على رسالة الويب كسلسلة
+            string jsonString = e.TryGetWebMessageAsString();
+            //MessageBox.Show("jsonString: " + jsonString);
+
+            if (!string.IsNullOrEmpty(jsonString))
+            {
+                Debug.WriteLine($"WebMessageReceived: JavaScript: {jsonString}");
+                // 1. إزالة الأقواس المعقوفة من بداية ونهاية الرسالة
+                if (jsonString.StartsWith("{") && jsonString.EndsWith("}"))
+                {
+                    jsonString = jsonString.Substring(1, jsonString.Length - 2); // إزالة الحرف الأول والأخير
+                }
+
+                // 2. تقسيم الرسالة إلى أزواج "مفتاح=قيمة" باستخدام فاصلة كفاصل
+                string[] pairs = jsonString.Split(',');
+
+                string typeValue = null;
+                string valueTarget = null;
+                string jMessage = null;
+
+                foreach (string pair in pairs)
+                {
+                    // 3. تقسيم كل زوج "مفتاح=قيمة" باستخدام علامة يساوي كفاصل
+                    string[] parts = pair.Split(':');
+
+                    if (parts.Length == 2)
+                    {
+                        string key = parts[0].Trim(); // المفتاح هو الجزء الأول، وإزالة المسافات البيضاء الزائدة
+                        string value = parts[1].Trim(); // القيمة هي الجزء الثاني، وإزالة المسافات البيضاء الزائدة
+
+                        // 4. التحقق من المفتاح وتخزين القيمة المناسبة
+                        if (key == "\"type\"" || key == "type") // التعامل مع كلتا الحالتين: مع وبدون علامات اقتباس
+                        {
+                            typeValue = value.Trim('\"'); // إزالة علامات الاقتباس من القيمة إذا كانت موجودة
+                        }
+                        else if (key == "\"target\"" || key == "target")
+                        {
+                            valueTarget = value.Trim('\"');
+                        }
+                        else if (key == "\"jmessage\"" || key == "jmessage")
+                        {
+                            jMessage = value.Trim('\"');
+                        }
+                    }
+                }
+
+                // 5. الآن لديك القيم المستخرجة في المتغيرات: typeValue, valueTarget, jMessage
+                // يمكنك استخدام هذه القيم كما تشاء في كود C# الخاص بك
+
+                Debug.WriteLine($"Parsed Values:");
+                Debug.WriteLine($"  type = {typeValue}");
+                Debug.WriteLine($"  target = {valueTarget}");
+                Debug.WriteLine($"  jmessage = {jMessage}");
+                //MessageBox.Show("typeValue: " + typeValue);
+
+                // [مثال: استخدام القيم المستخرجة - يمكنك استبدال هذا الكود بالإجراءات التي تريدها]
+                if (typeValue == "theme.Changed")
+                {
+                    bool parsedValue;
+                    if (bool.TryParse(valueTarget, out parsedValue)) // محاولة تحويل قيمة "value" إلى قيمة منطقية (Boolean)
+                    {
+                        string parsedColor = jMessage; // قيمة اللون مباشرة كسلسلة نصية
+                        //MessageBox.Show("apptheme: " + apptheme);
+                        //_ = HandleThemeChangeAsync(); // استدعاء دالة لمعالجة تغيير النمط
+                    }
+                    else
+                    {
+                        Debug.WriteLine($"خطأ: القيمة '{valueTarget}' ليست قيمة منطقية صالحة لـ 'value'.");
+                    }
+                }
+                if (typeValue == "button.click")
+                {
+                    //MessageBox.Show("valueValue: " + valueTarget);
+                    HandleButtonClickNew(valueTarget);
+                }
+            }
+            else
+            {
+                Debug.WriteLine("WebMessageReceived: تم استقبال رسالة فارغة أو غير صالحة.");
+            }
+
+            // تكوين JsonSerializer لتجاهل حساسية الحالة في أسماء الخصائص
+            //var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+
+
+
+
+            // [الكود الأصلي الخاص بك لمعالجة الرسائل من JavaScript - سيتم تنفيذه هنا الآن بعد التأكد من التهيئة]
+            // ... (بقية الكود لمعالجة الرسائل) ...
+        }
+
+        private async Task HandleThemeChangeAsync()
+        {
+            string nMode = "";
+            if (apptheme == "dark")
+            {
+                nMode = "true";
+            }
+            else
+            {
+                nMode = "false";
+            }
+            string nTheme = "colored";
+            //MessageBox.Show("apptheme: " + apptheme);
+            string script = $"newTheme({nMode}, '{nTheme}');";
+            //await webViewTopHeaderButtons.ExecuteScriptAsync(script);
+            //await webViewBackFirst.ExecuteScriptAsync(script);
+            //await webViewHeader.ExecuteScriptAsync(script);
+            //await webViewBackBack.ExecuteScriptAsync(script);
+        }
+
+        private void Update_Resize(object sender, EventArgs e)
+        {
+            ifArrangeControls++;
+            ArrangeControls();
+        }
+
+        private void ArrangeControls()
+        {
+            if (ifArrangeControls <= 30000000)
+            {
+                //webViewBackBack
+                labelLoading.Location = new Point(this.ClientSize.Width / 2 - labelLoading.Width / 2, this.ClientSize.Height / 2 - labelLoading.Height / 2);
+                loadingWait.Location = new Point(0, 0);
+                loadingWait.Size = new Size(this.ClientSize.Width, this.ClientSize.Height);
+
+                webViewBackBack.Location = new Point(0, 40);
+                webViewBackBack.Size = new Size(this.ClientSize.Width, this.ClientSize.Height - 40);
+
+                webViewHeader.Location = new Point(0, 0);
+                webViewHeader.Size = new Size(this.ClientSize.Width - webViewTopHeaderButtons.Width + 3, 40);
+
+                webViewTopHeaderButtons.Location = new Point(this.ClientSize.Width - webViewTopHeaderButtons.Width, 0);
+
+                webViewBackFirst.Location = new Point(25, 59);
+                webViewBackFirst.Size = new Size(this.ClientSize.Width - 50, this.ClientSize.Height - 92);
+            }
+        }
+
+        async void InitializeWebViewBackBackAsync()
+        {
+            if (File.Exists(webViewBackBackUrl) && Uri.TryCreate(webViewBackBackUrl, UriKind.Absolute, out Uri uri))
+            {
+                // الملف موجود وعنوان URL صحيح، تحميل الصفحة
+                try
+                {
+                    await webViewBackBack.EnsureCoreWebView2Async(null);
+                    // تعطيل مفاتيح تسريع المستعرض
+                    webViewBackBack.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = false;
+                    // تعطيل النقر بزر الماوس الايمن
+                    webViewBackBack.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
+                    await webViewBackBack.CoreWebView2.ExecuteScriptAsync(
+                    "window.addEventListener('contextmenu', window => {window.preventDefault();});"
+                    );
+                    webViewBackBack.CoreWebView2.AddWebResourceRequestedFilter(
+                        "*",
+                        CoreWebView2WebResourceContext.All
+                    );
+                    webViewBackBack.CoreWebView2.NavigationCompleted += WebViewBackBack_NavigationCompleted;
+                    webViewBackBack.CoreWebView2.WebMessageReceived += WebViewBackBack_WebMessageReceived;
+                    webViewBackBack.Source = new Uri(webViewBackBackUrl); // تأكد من المسار
+                }
+                catch (Exception ex)
+                {
+                    //MessageBox.Show($"webViewBackBack initialization error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            else
+            {
+                // حدث خطأ، عرض رسالة
+                //MessageBox.Show("Error loading dll, please check dll backBack: "  + webViewBackBackUrl );
+            }
+        }
+
+        private void WebViewBackBack_NavigationCompleted(object sender, CoreWebView2NavigationCompletedEventArgs e)
+        {
+            /*
+            Timer timer = new Timer();
+            timer.Interval = 500; // تأخير 500 مللي ثانية (نصف ثانية)
+            timer.Tick += (s, ev) => {
+                webViewBackBack.CoreWebView2.OpenDevToolsWindow();
+                timer.Stop(); // إيقاف المؤقت بعد الفتح
+                timer.Dispose();// التخلص من المؤقت
+            };
+            timer.Start();
+            */
+
+            if (e.IsSuccess)
+            {
+                // لتعطيل التمرير بشكل كامل
+                webViewBackBack.CoreWebView2.ExecuteScriptAsync(@"
+                //document.documentElement.style.overflow = 'hidden';
+                //document.body.style.overflow = 'hidden';
+                document.documentElement.style.overflow = 'hidden';
+                document.body.style.overflow = 'hidden';
+                document.documentElement.style.scrollbarWidth = 'none';
+                document.body.style.scrollbarWidth = 'none';
+                document.body.style.setProperty('--webkit-scrollbar', 'none');
+                ");
+            }
+
+            // هذا الكود سيتم تنفيذه بعد الانتهاء من تحميل الصفحة
+            //webViewBackBack.CoreWebView2.OpenDevToolsWindow();
+            //MessageBox.Show("تم تحميل الصفحة بنجاح");
+        }
+
+        private void WebViewBackBack_WebMessageReceived(object sender, CoreWebView2WebMessageReceivedEventArgs e)
+        {
+            //MessageBox.Show("get message");
+
+        }
+
+        async void InitializeWebViewUpdateAsync()
+        {
+            if (File.Exists(webViewUpdateUrl) && Uri.TryCreate(webViewUpdateUrl, UriKind.Absolute, out Uri uri))
+            {
+                // الملف موجود وعنوان URL صحيح، تحميل الصفحة
+                try
+                {
+                    await webViewBackFirst.EnsureCoreWebView2Async(null);
+                    /*
+                    // تعطيل مفاتيح تسريع المستعرض
+                    webViewBackFirst.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = false;
+                    // تعطيل النقر بزر الماوس الايمن
+                    webViewBackFirst.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
+                    await webViewBackFirst.CoreWebView2.ExecuteScriptAsync(
+                    "window.addEventListener('contextmenu', window => {window.preventDefault();});"
+                );
+                    webViewBackFirst.CoreWebView2.AddWebResourceRequestedFilter(
+                    "*",
+                    CoreWebView2WebResourceContext.All
+                );
+                    */
+                    webViewBackFirst.CoreWebView2.NavigationCompleted += WebViewUpdate_NavigationCompleted;
+                    webViewBackFirst.CoreWebView2.WebMessageReceived += WebViewUpdate_WebMessageReceived;
+                    webViewBackFirst.Source = new Uri(webViewUpdateUrl); // تأكد من المسار
+                }
+                catch (Exception ex)
+                {
+                    //MessageBox.Show($"webViewBackFirst initialization error occurred.: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            else
+            {
+                // حدث خطأ، عرض رسالة
+                //MessageBox.Show("Error loading dll, please check dll backFirst: " /* + webViewUpdateUrl */);
+                ShowMessage("Error", "Dll initialization error occurred, please check dll file: backFirst.dll", "Error", "exit", "OK", out dialogResult);
+            }
+        }
+
+        private void WebViewUpdate_NavigationCompleted(object sender, CoreWebView2NavigationCompletedEventArgs e)
+        {
+            /*
+            Timer timer = new Timer();
+            timer.Interval = 500; // تأخير 500 مللي ثانية (نصف ثانية)
+            timer.Tick += (s, ev) => {
+                webViewBackFirst.CoreWebView2.OpenDevToolsWindow();
+                timer.Stop(); // إيقاف المؤقت بعد الفتح
+                timer.Dispose();// التخلص من المؤقت
+            };
+            timer.Start();
+            */
+
+            if (e.IsSuccess)
+            {
+                // لتعطيل التمرير بشكل كامل
+                webViewBackFirst.CoreWebView2.ExecuteScriptAsync(@"
+                //document.documentElement.style.overflow = 'hidden';
+                //document.body.style.overflow = 'hidden';
+                document.documentElement.style.overflow = 'hidden';
+                document.body.style.overflow = 'hidden';
+                document.documentElement.style.scrollbarWidth = 'none';
+                document.body.style.scrollbarWidth = 'none';
+                document.body.style.setProperty('--webkit-scrollbar', 'none');
+                ");
+                //MessageBox.Show("COMPL");
+                loadingWait.Visible = false;
+                loadingWait.SendToBack();
+                webViewBackFirst.BringToFront();
+                webViewTopHeaderButtons.BringToFront();
+                webViewHeader.BringToFront();
+            }
+
+            // استخراج تجميع التطبيق الحالي (Assembly)
+            string sawuExePath = Path.Combine(Application.StartupPath, "SAWU.exe");
+
+            // تحميل تجميع SAWU.exe
+            Assembly sawuAssembly = Assembly.LoadFile(sawuExePath);
+
+            // جلب معلومات اسم البرنامج (Assembly Title) من تجميع SAWU
+            AssemblyTitleAttribute titleAttribute = (AssemblyTitleAttribute)Attribute.GetCustomAttribute(
+                sawuAssembly, typeof(AssemblyTitleAttribute));
+            programTitle = titleAttribute?.Title;
+
+            // جلب معلومات وصف البرنامج (Assembly Description) من تجميع SAWU
+            AssemblyDescriptionAttribute descriptionAttribute = (AssemblyDescriptionAttribute)Attribute.GetCustomAttribute(
+                sawuAssembly, typeof(AssemblyDescriptionAttribute));
+            programDescription = descriptionAttribute?.Description;
+
+            // جلب معلومات إصدار الملف (File Version) من تجميع SAWU
+            FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(sawuAssembly.Location);
+            productName = fileVersionInfo.ProductName;
+            versionNumber = fileVersionInfo.FileVersion;
+
+            // جلب قيمة خاصية Copyright (حقوق النشر) من تجميع SAWU
+            AssemblyCopyrightAttribute copyrightAttribute = (AssemblyCopyrightAttribute)Attribute.GetCustomAttribute(
+                sawuAssembly, typeof(AssemblyCopyrightAttribute));
+            releaseDate = copyrightAttribute?.Copyright;
+
+            //string versionNumber = "3.1.0.0";
+            //string releaseDate = "2025-01-15";
+
+            //MessageBox.Show("versionNumber: " + versionNumber);
+
+            // تمرير القيم إلى دالة JavaScript
+            string script = $"checkInternetConnection('{versionNumber}', '{releaseDate}', '{yourAccessToken}');";
+            webViewBackFirst.CoreWebView2.ExecuteScriptAsync(script);
+
+            // هذا الكود سيتم تنفيذه بعد الانتهاء من تحميل الصفحة
+            webViewBackFirst.CoreWebView2.OpenDevToolsWindow();
+            //MessageBox.Show("تم تحميل الصفحة بنجاح");
+        }
+
+        private void WebViewUpdate_WebMessageReceived(object sender, CoreWebView2WebMessageReceivedEventArgs e)
+        {
+            if (webViewBackFirst.CoreWebView2 == null) return;
+            string jsonString = e.TryGetWebMessageAsString();
+            Console.WriteLine($"WebViewUpdate_WebMessageReceived: {jsonString}");
+
+            if (!string.IsNullOrEmpty(jsonString))
+            {
+                Debug.WriteLine($"WebMessageReceived: JavaScript: {jsonString}");
+                // 1. إزالة الأقواس المعقوفة من بداية ونهاية الرسالة
+                if (jsonString.StartsWith("{") && jsonString.EndsWith("}"))
+                {
+                    jsonString = jsonString.Substring(1, jsonString.Length - 2); // إزالة الحرف الأول والأخير
+                }
+
+                // 2. تقسيم الرسالة إلى أزواج "مفتاح=قيمة" باستخدام فاصلة كفاصل
+                string[] pairs = jsonString.Split(',');
+
+                string typeValue = null;
+                string valueTarget = null;
+                string jMessage = null;
+
+                foreach (string pair in pairs)
+                {
+                    // 3. تقسيم كل زوج "مفتاح=قيمة" باستخدام علامة يساوي كفاصل
+                    string[] parts = pair.Split(':');
+
+                    if (parts.Length == 2)
+                    {
+                        string key = parts[0].Trim(); // المفتاح هو الجزء الأول، وإزالة المسافات البيضاء الزائدة
+                        string value = parts[1].Trim(); // القيمة هي الجزء الثاني، وإزالة المسافات البيضاء الزائدة
+
+                        // 4. التحقق من المفتاح وتخزين القيمة المناسبة
+                        if (key == "\"type\"" || key == "type") // التعامل مع كلتا الحالتين: مع وبدون علامات اقتباس
+                        {
+                            typeValue = value.Trim('\"'); // إزالة علامات الاقتباس من القيمة إذا كانت موجودة
+                        }
+                        else if (key == "\"target\"" || key == "target")
+                        {
+                            valueTarget = value.Trim('\"');
+                        }
+                        else if (key == "\"jmessage\"" || key == "jmessage")
+                        {
+                            jMessage = value.Trim('\"');
+                        }
+                    }
+                }
+
+                // 5. الآن لديك القيم المستخرجة في المتغيرات: typeValue, valueTarget, jMessage
+                // يمكنك استخدام هذه القيم كما تشاء في كود C# الخاص بك
+
+                Debug.WriteLine($"Parsed Values:");
+                Debug.WriteLine($"  type = {typeValue}");
+                Debug.WriteLine($"  target = {valueTarget}");
+                Debug.WriteLine($"  jmessage = {jMessage}");
+                //MessageBox.Show("typeValue: " + typeValue);
+
+                if (typeValue == "button.click")
+                {
+                    //MessageBox.Show("valueValue: " + valueTarget);
+                    HandleButtonClickNew(valueTarget);
+                }
+
+            }
+            else
+            {
+                Debug.WriteLine("WebMessageReceived: Received empty message or null");
+            }
+
+
+        }
+
+        async void InitializeWebViewTopHeaderButtonsAsync()
+        {
+            if (File.Exists(webViewTopHeaderButtonsUrl) && Uri.TryCreate(webViewTopHeaderButtonsUrl, UriKind.Absolute, out Uri uri))
+            {
+                // الملف موجود وعنوان URL صحيح، تحميل الصفحة
+                try
+                {
+                    await webViewTopHeaderButtons.EnsureCoreWebView2Async(null);
+                    // تعطيل مفاتيح تسريع المستعرض
+                    webViewTopHeaderButtons.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = false;
+                    // تعطيل النقر بزر الماوس الايمن
+                    webViewTopHeaderButtons.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
+                    await webViewTopHeaderButtons.CoreWebView2.ExecuteScriptAsync(
+                    "window.addEventListener('contextmenu', window => {window.preventDefault();});"
+                );
+                    webViewTopHeaderButtons.CoreWebView2.AddWebResourceRequestedFilter(
+                    "*",
+                    CoreWebView2WebResourceContext.All
+                );
+                    webViewTopHeaderButtons.CoreWebView2.NavigationCompleted += WebViewTopHeaderButtons_NavigationCompleted;
+                    webViewTopHeaderButtons.CoreWebView2.WebMessageReceived += WebViewTopHeaderButtons_WebMessageReceived;
+                    webViewTopHeaderButtons.Source = new Uri(webViewTopHeaderButtonsUrl); // تأكد من المسار
+                }
+                catch (Exception ex)
+                {
+                    //MessageBox.Show($"WebView2 initialization error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            else
+            {
+                // حدث خطأ، عرض رسالة
+                //MessageBox.Show("Error loading dll, please check dll topheaderbuttons: " /* + webViewTopHeaderButtonsUrl */);
+            }
+        }
+
+        private void WebViewTopHeaderButtons_NavigationCompleted(object sender, CoreWebView2NavigationCompletedEventArgs e)
+        {
+            /*
+            Timer timer = new Timer();
+            timer.Interval = 500; // تأخير 500 مللي ثانية (نصف ثانية)
+            timer.Tick += (s, ev) => {
+                webViewTopHeaderButtons.CoreWebView2.OpenDevToolsWindow();
+                timer.Stop(); // إيقاف المؤقت بعد الفتح
+                timer.Dispose();// التخلص من المؤقت
+            };
+            timer.Start();
+            */
+
+            if (e.IsSuccess)
+            {
+                // لتعطيل التمرير بشكل كامل
+                webViewTopHeaderButtons.CoreWebView2.ExecuteScriptAsync(@"
+                //document.documentElement.style.overflow = 'hidden';
+                //document.body.style.overflow = 'hidden';
+                document.documentElement.style.overflow = 'hidden';
+                document.body.style.overflow = 'hidden';
+                document.documentElement.style.scrollbarWidth = 'none';
+                document.body.style.scrollbarWidth = 'none';
+                document.body.style.setProperty('--webkit-scrollbar', 'none');
+                ");
+                //statusStartupPanel.FillColor = Color.FromArgb(255, 73, 130);
+            }
+
+            // هذا الكود سيتم تنفيذه بعد الانتهاء من تحميل الصفحة
+            //webViewTopHeaderButtons.CoreWebView2.OpenDevToolsWindow();
+            //MessageBox.Show("تم تحميل الصفحة بنجاح");
+        }
+
+        private void WebViewTopHeaderButtons_WebMessageReceived(object sender, CoreWebView2WebMessageReceivedEventArgs e)
+        {
+            //MessageBox.Show("WebViewTopHeaderButtons_WebMessageReceived");
+            // التحقق من أن webViewTopHeaderButtons.CoreWebView2 ليس فارغًا لتجنب استثناءات المرجع null
+            if (webViewTopHeaderButtons.CoreWebView2 == null) return;
+
+
+        }
+
+        async void InitializeWebViewHeaderAsync()
+        {
+            if (File.Exists(webViewHeaderUrl) && Uri.TryCreate(webViewHeaderUrl, UriKind.Absolute, out Uri uri))
+            {
+                // الملف موجود وعنوان URL صحيح، تحميل الصفحة
+                try
+                {
+                    await webViewHeader.EnsureCoreWebView2Async(null);
+                    // تعطيل مفاتيح تسريع المستعرض
+                    webViewHeader.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = false;
+                    // تعطيل النقر بزر الماوس الايمن
+                    webViewHeader.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
+                    await webViewHeader.CoreWebView2.ExecuteScriptAsync(
+                    "window.addEventListener('contextmenu', window => {window.preventDefault();});"
+                );
+                    webViewHeader.CoreWebView2.AddWebResourceRequestedFilter(
+                    "*",
+                    CoreWebView2WebResourceContext.All
+                );
+                    webViewHeader.CoreWebView2.NavigationCompleted += WebViewHeader_NavigationCompleted;
+                    webViewHeader.CoreWebView2.WebMessageReceived += WebViewHeader_WebMessageReceived;
+                    webViewHeader.Source = new Uri(webViewHeaderUrl); // تأكد من المسار
+                }
+                catch (Exception ex)
+                {
+                    //MessageBox.Show($"WebView2 initialization error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            else
+            {
+                // حدث خطأ، عرض رسالة
+                //MessageBox.Show("Error loading dll, please check dll back: " /* + webViewFeedBackHeaderReportUrl */);
+            }
+        }
+
+        private void WebViewHeader_NavigationCompleted(object sender, CoreWebView2NavigationCompletedEventArgs e)
+        {
+            /*
+            Timer timer = new Timer();
+            timer.Interval = 500; // تأخير 500 مللي ثانية (نصف ثانية)
+            timer.Tick += (s, ev) => {
+                webViewHeader.CoreWebView2.OpenDevToolsWindow();
+                timer.Stop(); // إيقاف المؤقت بعد الفتح
+                timer.Dispose();// التخلص من المؤقت
+            };
+            timer.Start();
+            */
+
+            if (e.IsSuccess)
+            {
+                string escapedTitle = thisTitle.Replace(@"\", @"\\").Replace("'", @"\'").Replace(@"""", @"\""").Replace("\r", @"\r").Replace("\n", @"\n");
+                webViewHeader.CoreWebView2.ExecuteScriptAsync($@"
+                thisJavaTitle = '{escapedTitle}';
+                document.documentElement.style.overflow = 'hidden';
+                document.body.style.overflow = 'hidden';
+                document.documentElement.style.scrollbarWidth = 'none';
+                document.body.style.scrollbarWidth = 'none';
+                document.body.style.setProperty('--webkit-scrollbar', 'none');
+                document.getElementById('title').innerHTML = '<img src=""img/update.png"" class=""w-6 h-6 text-blue-500 dark:text-blue-400 mr-3""/>' + thisJavaTitle;
+            ");
+            }
+            // هذا الكود سيتم تنفيذه بعد الانتهاء من تحميل الصفحة
+            //webViewHeader.CoreWebView2.OpenDevToolsWindow();
+            //MessageBox.Show("تم تحميل الصفحة بنجاح");
+        }
+
+        private void WebViewHeader_WebMessageReceived(object sender, CoreWebView2WebMessageReceivedEventArgs e)
+        {
+            //MessageBox.Show("get message");
+
+        }
+
+        private void ShowMessage(string title, string message, string type, string action, string buttons, out string result)
+        {
+            HideBlurMessage();
+            //labelDialogResult.Text = "Dialog Box Result";
+            //DialogResult result = RJMessageBox.Show("هذا الخيار في التطوير القادم إن شاء الله", "رسالة مهمة", MessageBoxButtons.OK);
+
+            buttonFalse.Focus();
+
+            //MessageBox.Show("Main_Home_FormClosing");
+
+            int ypg = this.Location.Y + 1;
+            int xpg = this.Location.X;
+            int width = this.Size.Width;
+            int height = this.Size.Height - 0;
+            int screenWidth = Screen.PrimaryScreen.WorkingArea.Width;
+            int screenHeight = Screen.PrimaryScreen.WorkingArea.Height;
+            MessageBackground newMDIChild = new MessageBackground();
+            Rectangle screenRectangle = this.RectangleToScreen(this.ClientRectangle);
+
+            newMDIChild.GetType = "NotTimer"; //newMDIChild.GetPage = "NotTimer";
+            newMDIChild.GetOpacity = 0.75;
+
+            if (this.WindowState == FormWindowState.Maximized)
+            {
+                int visualTopHeight = 0;
+                int visualBottomHeight = 17;
+                int titleHeight = screenRectangle.Top - this.Top - visualTopHeight + webViewHeader.Height;
+                newMDIChild.GetY = ypg + titleHeight + maxBorderSizeTop;
+                newMDIChild.GetX = xpg;
+                newMDIChild.GetWidth = width;
+                //newMDIChild.GetHeight = height - titleHeight - visualBottomHeight;
+                newMDIChild.GetHeight = height - (webViewHeader.Height + visualBottomHeight) - 3;
+            }
+            else
+            {
+                int visualTopHeight = 1;
+                int visualBottomHeight = minBorderSizeTop + minBorderSizeBottom;
+                int titleHeight = screenRectangle.Top - this.Top - visualTopHeight + webViewHeader.Height;
+                newMDIChild.GetY = ypg + titleHeight + minBorderSizeTop;
+                newMDIChild.GetX = xpg + minBorderSizeLeft;
+                newMDIChild.GetWidth = width - (minBorderSizeLeft + minBorderSizeRight);
+                newMDIChild.GetHeight = height - titleHeight - visualBottomHeight - 3;
+            }
+            newMDIChild.LoaderTitle = title;
+            //MessageBox.Show(height.ToString());
+            //Environment.Exit(0);
+            string[] loaderMessages = {
+                message, type, buttons
+            };
+            newMDIChild.LoaderMessages = loaderMessages;
+            //newMDIChild.MdiParent = this;
+
+            newMDIChild.ShowDialog(this);
+            result = newMDIChild.SendData();
+            //MessageBox.Show(result.ToString());
+            //MessageBox.Show(action);
+            if (action == "exit")
+            {
+                this.Close();
+            }
+            if (result.ToString() == "ok")
+            {
+
+                //Environment.Exit(0);
+            }
+            else
+            {
+                //e.Cancel = true;
+            }
+        }
+
+        //ShowMessage2("Validation Errors", errorMessages, "Error", "none", "OK")
+        private void ShowMessage2(string title, string errorMessages, string msgType, string action, string buttons)
+        {
+            DialogResult result;
+            HideBlurMessage();
+            using (var msgForm = new MsgBox(errorMessages,
+            title,
+            MessageBoxButtons.OK,
+            MessageBoxIcon.Error, "notfound.png"))
+                result = msgForm.ShowDialog(this);
+
+        }
+
+        private void ShowBlurMessage(string nTitle)
+        {
+            int ypg = this.Location.Y + 1;
+            int xpg = this.Location.X;
+            int width = this.Size.Width;
+            int height = this.Size.Height - 0;
+            int screenWidth = Screen.PrimaryScreen.WorkingArea.Width;
+            int screenHeight = Screen.PrimaryScreen.WorkingArea.Height;
+
+            //LoadingBlur newMDIChild = new LoadingBlur(this);
+            _loadingBlur = new LoadingBlur(this);
+
+            Rectangle screenRectangle = this.RectangleToScreen(this.ClientRectangle);
+
+            _loadingBlur.GetType = "Timer"; //newMDIChild.GetPage = "NotTimer";
+            _loadingBlur.GetOpacity = 0.75;
+
+            if (this.WindowState == FormWindowState.Maximized)
+            {
+                int visualTopHeight = 0;
+                int visualBottomHeight = 17;
+                int titleHeight = screenRectangle.Top - this.Top - visualTopHeight + webViewHeader.Height;
+                _loadingBlur.GetY = ypg + titleHeight + maxBorderSizeTop;
+                _loadingBlur.GetX = xpg;
+                _loadingBlur.GetWidth = width;
+                //_loadingBlur.GetHeight = height - titleHeight - visualBottomHeight;
+                _loadingBlur.GetHeight = height - (webViewHeader.Height + visualBottomHeight) - 3;
+            }
+            else
+            {
+                int visualTopHeight = 1;
+                int visualBottomHeight = minBorderSizeTop + minBorderSizeBottom;
+                int titleHeight = screenRectangle.Top - this.Top - visualTopHeight + webViewHeader.Height;
+                _loadingBlur.GetY = ypg + titleHeight + minBorderSizeTop;
+                _loadingBlur.GetX = xpg + minBorderSizeLeft;
+                _loadingBlur.GetWidth = width - (minBorderSizeLeft + minBorderSizeRight);
+                _loadingBlur.GetHeight = height - titleHeight - visualBottomHeight - 3;
+            }
+            _loadingBlur.LoaderTitle = nTitle;
+            //WorkRecords();
+            //MessageBox.Show(height.ToString());
+            //Environment.Exit(0);
+            string[] loaderMessages = {
+                "The program is being prepared to close...",
+                "Please wait a moment...",
+                "Saving program settings..."
+            };
+            _loadingBlur.LoaderMessages = loaderMessages;
+            //newMDIChild.MdiParent = this;
+            _loadingBlur.ShowDialog();
+        }
+
+        private async void HideBlurMessage()
+        {
+            Console.WriteLine("HideBlurMessage()");
+            if (_loadingBlur != null)
+            {
+                await _loadingBlur.HideBlurMessageAsync();
+            }
+            else
+            {
+                Console.WriteLine("_loadingBlur is null, unable to hide blur message.");
+            }
+        }
+
+        private void HideAllControls()
+        {
+            webViews["webViewPage1"] = webViewBackBack; // افترض أن لديك عناصر WebView2 بأسماء webViewPage1, webViewPage2...
+            webViews["webViewPage2"] = webViewBackFirst;
+            webViews["webViewPage3"] = webViewHeader;
+            webViews["webViewPage4"] = webViewTopHeaderButtons;
+
+            //webViews["webViewPage6"] = webViewPage6;
+            ReleaseCapture();
+            // إنشاء قائمة بالمفاتيح المراد إزالتها لتجنب التعديل أثناء التكرار
+            List<string> keysToRemove = new List<string>(webViews.Keys);
+
+            foreach (string key in keysToRemove)
+            {
+                if (webViews.TryGetValue(key, out WebView2 webView)) // استخدام TryGetValue للتحقق من وجود المفتاح
+                {
+                    webView.Dispose(); // تحرير موارد WebView2
+                    webViews.Remove(key); // إزالة العنصر من القاموس
+                    webView = null; // تعيين المتغير المحلي إلى null (اختياري، لكن من الأفضل فعله)
+                }
+            }
+        }
+
+        private void thisClose()
+        {
+            //MessageBox.Show("thisClose");
+            buttonFalse.Focus();
+            this.Close();
+        }
+
+        private void ShowTooltipWithDelay(string tooltipText, Point mousePosition)
+        {
+            // منع تداخل Tooltip إذا كان مؤقتًا يعمل بالفعل أو Tooltip معروض
+            if ((tooltipTimer != null && tooltipTimer.Enabled) || isTooltipVisible)
+            {
+                // تحديث الرسالة والموقع فقط إذا كانت مختلفة
+                if (currentTooltipMessage != tooltipText || currentTooltipPosition != mousePosition)
+                {
+                    currentTooltipMessage = tooltipText;
+                    currentTooltipPosition = mousePosition;
+                }
+                return;
+            }
+
+            currentTooltipMessage = tooltipText;
+            currentTooltipPosition = mousePosition;
+
+            tooltipTimer = new Timer();
+            tooltipTimer.Interval = 350;
+            tooltipTimer.Tick += (s, args) =>
+            {
+                tooltipTimer.Stop();
+                tooltipTimer.Dispose();
+                tooltipTimer = null;
+
+                ShowCustomToolTip(currentTooltipMessage, currentTooltipPosition);
+            };
+            tooltipTimer.Start();
+        }
+
+        private string GetTooltipTextForControl(string target, string message)
+        {
+            switch (target)
+            {
+                case "buttonClose":
+                    return buttonClose_Tooltip;
+
+                case "buttonMinimize":
+                    return buttonMinimize_Tooltip;
+
+                default:
+                    return "";
+            }
+        }
+
+        private void ShowCustomToolTip(string message, Point mousePosition2)
+        {
+            if (string.IsNullOrEmpty(message)) return; // لا تعرض Tooltip إذا كانت الرسالة فارغة
+
+            if (this.tip == null)
+            {
+                this.tip = new CustomToolTip();
+            }
+
+            this.tip.SetToolTip(this, message);
+
+            this.tip.Show(
+                message,
+                this,
+                this.PointToClient(
+                    new Point(mousePosition2.X, mousePosition2.Y + 15)
+                ),
+                3000
+            );
+            isTooltipVisible = true; // تحديث حالة العرض
+        }
+
+        private void HideCustomToolTip()
+        {
+            if (tooltipTimer != null && tooltipTimer.Enabled)
+            {
+                tooltipTimer.Stop();
+                tooltipTimer.Dispose();
+                tooltipTimer = null;
+            }
+
+            if (this.tip != null && this.tip.Active)
+            {
+                this.tip.Hide(this);
+            }
+            isTooltipVisible = false; // تحديث حالة العرض
+        }
+
+        private void HandleButtonClickNew(string target)
+        {
+            //MessageBox.Show("HandleButtonClickNew: " + target);
+            switch (target)
+            {
+                case "buttonClose":
+                    // استخدام Invoke لتنفيذ الإغلاق على خيط الواجهة الرسومية الرئيسي
+                    Console.WriteLine("buttonClose11111...");
+                    //MessageBox.Show("thisClose");
+                    BeginInvoke(new Action(thisClose));
+                    //thisClose();
+                    break;
+
+                case "buttonMinimize":
+                    // استخدام Invoke لتنفيذ التصغير على خيط الواجهة الرسومية الرئيسي
+                    Console.WriteLine("buttonMinimize...");
+                    BeginInvoke(new Action(thisMinimized));
+                    break;
+
+                case "checkInternetConnection":
+                    // استخدام Invoke لتنفيذ التصغير على خيط الواجهة الرسومية الرئيسي
+                    Console.WriteLine("checkInternetConnection...");
+                    _ = checkInternetConnectionAsync();
+                    break;
+
+                case "checkforupdate":
+                    // استخدام Invoke لتنفيذ التصغير على خيط الواجهة الرسومية الرئيسي
+                    Console.WriteLine("checkforupdate...");
+                    _ = checkForUpdateAsync();
+                    break;
+
+                case "changelog":
+                    // استخدام Invoke لتنفيذ التصغير على خيط الواجهة الرسومية الرئيسي
+                    Console.WriteLine("changelog...");
+                    _ = changeLogAsync();
+                    break;
+
+                case "canProceed":
+                    /*
+                    string jMessage2 = message.JMessage ?? "Unknown";
+                    Console.WriteLine("canProceed - Value: " + jMessage2);
+                    if (jMessage2 == "yes")
+                    {
+                        this.DialogResult = DialogResult.OK;
+                        this.Close();
+                        this.DialogResult = DialogResult.OK;
+                    }
+                    else if (jMessage2 == "no")
+                    {
+                        //BeginInvoke((Action)(() => ShowMessage(
+                        //            "App Message",
+                        //            "Please read the Tips, Warnings, Risks and agree to the terms before proceeding.", "Warning", "none", "OK", out dialogResult)));
+                        HideCustomToolTip();
+                        //this.Close();
+                        //this.DialogResult = DialogResult.Cancel;
+                    }
+                    */
+                    // ... (بقية الكود الخاص بفتح الإعدادات) ...
+                    // مثال (يجب التأكد من أن SettingsForm لا تُسبب مشاكل cross-threading أيضًا):
+                    break;
+
+                default:
+                    Console.WriteLine($"Clicked unknown button: {target}");
+                    break;
+            }
+        }
+
+        private async Task checkInternetConnectionAsync()
+        {
+            if (webViewBackFirst != null && webViewBackFirst.CoreWebView2 != null)
+            {
+                string script = $"checkInternetConnection('{versionNumber}', '{releaseDate}', '{yourAccessToken}');";
+                await webViewBackFirst.CoreWebView2.ExecuteScriptAsync(script);
+            }
+        }
+
+        private async Task changeLogAsync()
+        {
+            //MessageBox.Show("changeLogAsync");
+            if (webViewBackFirst != null && webViewBackFirst.CoreWebView2 != null)
+            {
+                await webViewBackFirst.CoreWebView2.ExecuteScriptAsync("document.getElementById('changelog').disabled = true;");
+                await webViewBackFirst.CoreWebView2.ExecuteScriptAsync("document.getElementById('changelog').textContent = 'Opening...';");
+            }
+            string changeLogText = await UpdateChecker.GetLatestReleaseChangeLog(yourAccessToken); // استدعاء دالة جلب سجل التغييرات
+
+            /*
+             *
+            // استخراج تجميع التطبيق الحالي (Assembly)
+            Assembly assembly = Assembly.GetExecutingAssembly();
+
+            // جلب معلومات اسم البرنامج (Assembly Title)
+            AssemblyTitleAttribute titleAttribute = (AssemblyTitleAttribute)Attribute.GetCustomAttribute(
+                assembly, typeof(AssemblyTitleAttribute));
+            string programTitle = titleAttribute?.Title;
+
+            // جلب معلومات وصف البرنامج (Assembly Description)
+            AssemblyDescriptionAttribute descriptionAttribute = (AssemblyDescriptionAttribute)Attribute.GetCustomAttribute(
+                assembly, typeof(AssemblyDescriptionAttribute));
+            string programDescription = descriptionAttribute?.Description;
+
+            // جلب معلومات إصدار الملف (File Version)
+            FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
+            string productName = fileVersionInfo.ProductName;
+            string versionNumber = fileVersionInfo.FileVersion;
+
+            // جلب قيمة خاصية Copyright (حقوق النشر) التي استخدمناها لتخزين التاريخ
+            AssemblyCopyrightAttribute copyrightAttribute = (AssemblyCopyrightAttribute)Attribute.GetCustomAttribute(
+                assembly, typeof(AssemblyCopyrightAttribute));
+            string releaseDate = copyrightAttribute?.Copyright;
+
+            // **[خطوة التصحيح 1: فحص محتوى changeLogText]**
+            // يمكنك إبقاء MessageBox.Show مؤقتًا للتحقق من أن changeLogText ليس فارغًا ويحتوي على البيانات
+            // MessageBox.Show("ChangeLog Content:\n" + changeLogText);
+
+            */
+
+            try
+            {
+                //versionNumber = "3.0.0.0";
+                //releaseDate = "2025-03-09";
+                //MessageBox.Show("Version Number (SAWU) 111111111111:\n" + versionNumber);
+                // **استدعاء دالة جلب أحدث نسخة من GitHub**
+                Debug.WriteLine("WebViewUpdate_NavigationCompleted: قبل استدعاء GetLatestGitHubReleaseAsync");
+                // **استدعاء دالة جلب أحدث نسخة من GitHub**
+                Task<string> latestVersionTask = GetLatestGitHubReleaseAsync("socri007", "stopwindowsupdates", yourAccessToken);
+                Debug.WriteLine("WebViewUpdate_NavigationCompleted: بعد استدعاء GetLatestGitHubReleaseAsync، قبل الحصول على النتيجة");
+                versionNumber = await latestVersionTask; // استخدام await هنا
+                Debug.WriteLine($"WebViewUpdate_NavigationCompleted: بعد الحصول على النتيجة، versionNumber = {versionNumber}");
+
+                //MessageBox.Show("Version Number (SAWU) 2222222222222:\n" + versionNumber);
+                // يمكنك عرض المزيد من التفاصيل إذا أردت
+                // MessageBox.Show("Program Title (SAWU):\n" + programTitle);
+                // MessageBox.Show("Description (SAWU):\n" + programDescription);
+                // MessageBox.Show("Product Name (SAWU):\n" + productName);
+                // MessageBox.Show("Release Date (SAWU):\n" + releaseDate);
+
+                // تنسيق سجل التغييرات قليلاً (اختياري، لتحسين العرض في WebView2)
+                formattedChangeLog = $"<h2 style='padding-left: 10px;'>Stop Automatic Windows Updates (Version {versionNumber}) Changelog</h2><pre style='white-space: pre-wrap;'>{FormatChangeLogToHtml(changeLogText)}</pre>";
+                //string formattedChangeLog = changeLogText;
+                // **تنسيق سجل التغييرات بشكل احترافي باستخدام HTML**
+
+                int ypg = this.Location.Y + 1;
+                int xpg = this.Location.X;
+                int width = this.Size.Width;
+                int height = this.Size.Height - 0;
+                int screenWidth = Screen.PrimaryScreen.WorkingArea.Width;
+                int screenHeight = Screen.PrimaryScreen.WorkingArea.Height;
+                MessageBackground newMDIChild = new MessageBackground();
+                Rectangle screenRectangle = this.RectangleToScreen(this.ClientRectangle);
+
+                newMDIChild.GetType = "AppMessage"; //newMDIChild.GetPage = "NotTimer";
+                newMDIChild.GetOpacity = 0.75;
+                int visualTopHeight = 1;
+                int visualBottomHeight = minBorderSizeTop + minBorderSizeBottom;
+                int titleHeight = screenRectangle.Top - this.Top - visualTopHeight + webViewHeader.Height;
+                newMDIChild.GetY = ypg + titleHeight + minBorderSizeTop;
+                newMDIChild.GetX = xpg + minBorderSizeLeft;
+                newMDIChild.GetWidth = width - (minBorderSizeLeft + minBorderSizeRight);
+                newMDIChild.GetHeight = height - titleHeight - visualBottomHeight - 3;
+                newMDIChild.LoaderTitle = "Verification Message";
+                //MessageBox.Show(height.ToString());
+                //Environment.Exit(0);
+                string[] loaderMessages = {
+                        formattedChangeLog + "", "Warning", "YesNo"
+                    };
+                newMDIChild.LoaderMessages = loaderMessages;
+                //newMDIChild.MdiParent = this;
+
+                await Task.Delay(33); // تأخير بسيط (نصف ثانية)
+
+                newMDIChild.ShowDialog(this);
+                string result = newMDIChild.SendData();
+                myData = result.ToString();
+
+                //MessageBox.Show("result: " + result);
+                if (result.ToString() == "Yes")
+                {
+                    //loading.Top = 3000;
+                    //loading.Visible = false;
+                    //loading.Dispose();
+                    //workRecords();
+                    //MessageBox.Show("workRecords");
+                    //Environment.Exit(0);
+                }
+                if (myData == "Cancel")
+                {
+                    //this.Close();
+                    if (webViewBackFirst != null && webViewBackFirst.CoreWebView2 != null)
+                    {
+                        await webViewBackFirst.CoreWebView2.ExecuteScriptAsync("document.getElementById('changelog').disabled = false;");
+                        await webViewBackFirst.CoreWebView2.ExecuteScriptAsync("document.getElementById('changelog').textContent = 'Change Log';");
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                //MessageBox.Show($"حدث خطأ أثناء محاولة الحصول على معلومات SAWU: {ex.Message}");
+                // تنسيق سجل التغييرات قليلاً (اختياري، لتحسين العرض في WebView2)
+                formattedChangeLog = $"<h2 style='padding-left: 10px;'>Stop Automatic Windows Updates (v3.1.0.0) Changelog</h2><pre style='white-space: pre-wrap;'>{FormatChangeLogToHtml(changeLogText)}</pre>";
+                //string formattedChangeLog = changeLogText;
+                // **تنسيق سجل التغييرات بشكل احترافي باستخدام HTML**
+
+                int ypg = this.Location.Y + 1;
+                int xpg = this.Location.X;
+                int width = this.Size.Width;
+                int height = this.Size.Height - 0;
+                int screenWidth = Screen.PrimaryScreen.WorkingArea.Width;
+                int screenHeight = Screen.PrimaryScreen.WorkingArea.Height;
+                MessageBackground newMDIChild = new MessageBackground();
+                Rectangle screenRectangle = this.RectangleToScreen(this.ClientRectangle);
+
+                newMDIChild.GetType = "AppMessage"; //newMDIChild.GetPage = "NotTimer";
+                newMDIChild.GetOpacity = 0.75;
+                int visualTopHeight = 1;
+                int visualBottomHeight = minBorderSizeTop + minBorderSizeBottom;
+                int titleHeight = screenRectangle.Top - this.Top - visualTopHeight + webViewHeader.Height;
+                newMDIChild.GetY = ypg + titleHeight + minBorderSizeTop;
+                newMDIChild.GetX = xpg + minBorderSizeLeft;
+                newMDIChild.GetWidth = width - (minBorderSizeLeft + minBorderSizeRight);
+                newMDIChild.GetHeight = height - titleHeight - visualBottomHeight - 3;
+                newMDIChild.LoaderTitle = "Verification Message";
+                //MessageBox.Show(height.ToString());
+                //Environment.Exit(0);
+                string[] loaderMessages = {
+                formattedChangeLog + "", "Warning", "YesNo"
+            };
+                newMDIChild.LoaderMessages = loaderMessages;
+                //newMDIChild.MdiParent = this;
+
+                await Task.Delay(33); // تأخير بسيط (نصف ثانية)
+
+                newMDIChild.ShowDialog(this);
+                string result = newMDIChild.SendData();
+                myData = result.ToString();
+
+                //MessageBox.Show("result: " + result);
+                if (result.ToString() == "Yes")
+                {
+                    //loading.Top = 3000;
+                    //loading.Visible = false;
+                    //loading.Dispose();
+                    //workRecords();
+                    //MessageBox.Show("workRecords");
+                    //Environment.Exit(0);
+                }
+                if (myData == "Cancel")
+                {
+                    //this.Close();
+                    if (webViewBackFirst != null && webViewBackFirst.CoreWebView2 != null)
+                    {
+                        await webViewBackFirst.CoreWebView2.ExecuteScriptAsync("document.getElementById('changelog').disabled = false;");
+                        await webViewBackFirst.CoreWebView2.ExecuteScriptAsync("document.getElementById('changelog').textContent = 'Change Log';");
+                    }
+                }
+            }
+
+        }
+
+        private async Task<string> GetLatestGitHubReleaseAsync(string owner, string repo, string accessToken = null)
+        {
+            Debug.WriteLine("GetLatestGitHubReleaseAsync: الدالة بدأت");
+            using (var httpClient = new HttpClient())
+            {
+                httpClient.Timeout = TimeSpan.FromSeconds(10); // تعيين مهلة 10 ثواني
+                httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("SAWU-Update", "1.0")); // مطلوب لـ GitHub API
+
+                // إضافة رأس المصادقة إذا تم توفير رمز الوصول
+                if (!string.IsNullOrEmpty(accessToken))
+                {
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("token", accessToken);
+                }
+
+                try
+                {
+                    Debug.WriteLine($"GetLatestGitHubReleaseAsync: محاولة الحصول على https://api.github.com/repos/{owner}/{repo}/releases/latest");
+                    var response = await httpClient.GetAsync($"https://api.github.com/repos/{owner}/{repo}/releases/latest");
+                    Debug.WriteLine($"GetLatestGitHubReleaseAsync: تم استلام الاستجابة، حالة النجاح: {response.IsSuccessStatusCode}");
+                    response.EnsureSuccessStatusCode();
+                    string json = await response.Content.ReadAsStringAsync();
+                    Debug.WriteLine($"GetLatestGitHubReleaseAsync: تم قراءة محتوى الاستجابة JSON: {json}");
+                    JObject release = JObject.Parse(json);
+                    string tagName = release["tag_name"].ToString();
+                    Debug.WriteLine($"GetLatestGitHubReleaseAsync: تم استخراج tag_name: {tagName}");
+                    return tagName;
+                }
+                catch (HttpRequestException ex)
+                {
+                    Debug.WriteLine($"GetLatestGitHubReleaseAsync: خطأ في طلب HTTP: {ex.Message}");
+                    return versionNumber;
+                }
+                catch (TaskCanceledException ex)
+                {
+                    Debug.WriteLine($"GetLatestGitHubReleaseAsync: تم إلغاء المهمة: {ex.Message}");
+                    return versionNumber;
+                }
+                catch (Newtonsoft.Json.JsonReaderException ex)
+                {
+                    Debug.WriteLine($"GetLatestGitHubReleaseAsync: خطأ في تحليل JSON: {ex.Message}");
+                    return versionNumber;
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"GetLatestGitHubReleaseAsync: حدث خطأ غير متوقع: {ex.Message}");
+                    return versionNumber;
+                }
+                finally
+                {
+                    Debug.WriteLine("GetLatestGitHubReleaseAsync: الدالة انتهت");
+                }
+            }
+        }
+
+        // دالة جديدة لتنسيق سجل التغييرات إلى HTML
+        private string FormatChangeLogToHtml(string changeLogText)
+        {
+            //MessageBox.Show("ChangeLog Text Input:\n" + changeLogText); // عرض محتوى changeLogText في مربع رسالة
+            string htmlContent = "<div style='font-family: Segoe UI; padding: 15px;'>"; // بداية محتوى HTML مع تنسيق أساسي
+
+            // تقسيم النص إلى أسطر
+            string[] lines = changeLogText.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+
+            foreach (string line in lines)
+            {
+                string formattedLine = line;
+
+                // تحويل العناوين (الخط العريض: **عنوان:**) إلى <b>
+                //formattedLine = Regex.Replace(formattedLine, @"^\*\*(.+?):\*\*", "<b>$1:</b>");
+                //formattedLine = Regex.Replace(formattedLine, @"^\*\*(.+?):\*\*", "<b>$1:</b>", RegexOptions.IgnoreCase);
+                formattedLine = Regex.Replace(formattedLine, @"^\*\*(.+?)\*\*", "<b>$1</b>");
+                // تحويل القوائم النقطية (بداية الأسطر بـ - ) إلى <ul><li>
+                if (formattedLine.StartsWith("- "))
+                {
+                    formattedLine = "<li>" + formattedLine.Substring(2) + "</li>"; // إزالة "- " واستبدالها بـ <li>
+                }
+
+                htmlContent += "<p>" + formattedLine + "</p>"; // إضافة السطر المنسق إلى محتوى HTML
+            }
+
+            htmlContent += "</div>"; // نهاية محتوى HTML
+
+            // تجميع القوائم النقطية المتتالية داخل <ul></ul>
+            htmlContent = GroupListItemsIntoUl(htmlContent);
+
+
+            return htmlContent;
+        }
+
+
+        // دالة لتجميع عناصر القائمة <li> المتتالية داخل <ul></ul>
+        private string GroupListItemsIntoUl(string htmlContent)
+        {
+            string groupedHtmlContent = "";
+            bool inList = false;
+            string[] paragraphs = htmlContent.Split(new[] { "<p>" }, StringSplitOptions.RemoveEmptyEntries); // تقسيم المحتوى إلى فقرات
+
+            foreach (string paragraph in paragraphs)
+            {
+                string trimmedParagraph = paragraph.Trim();
+
+                if (trimmedParagraph.StartsWith("<li>") && trimmedParagraph.EndsWith("</li>"))
+                {
+                    if (!inList)
+                    {
+                        groupedHtmlContent += "<ul>"; // بداية قائمة <ul> إذا لم نكن بالفعل في قائمة
+                        inList = true;
+                    }
+                    groupedHtmlContent += "<p>" + trimmedParagraph + "</p>"; // إضافة عنصر القائمة <li> داخل فقرة <p>
+                }
+                else
+                {
+                    if (inList)
+                    {
+                        groupedHtmlContent += "</ul>"; // نهاية قائمة </ul> إذا كنا في قائمة وانتهى عنصر القائمة
+                        inList = false;
+                    }
+                    groupedHtmlContent += "<p>" + trimmedParagraph + "</p>"; // إضافة فقرة عادية <p>
+                }
+            }
+
+            if (inList) // التأكد من إغلاق </ul> إذا انتهى المحتوى بقائمة
+            {
+                groupedHtmlContent += "</ul>";
+            }
+
+            return groupedHtmlContent;
+        }
+
+        private async Task UpdateProgressUI(double progress, string fileName)
+        {
+            string script = $@"
+                updateProgress({progress}, '{fileName.Replace("'", "\\'")}');
+            ";
+            await webViewBackFirst.CoreWebView2.ExecuteScriptAsync(script);
+        }
+
+        private async Task checkForUpdateAsync()
+        {
+            if (webViewBackFirst != null && webViewBackFirst.CoreWebView2 != null)
+            {
+                try
+                {
+                    // تعطيل زر التحديث وتغيير النص للإشارة إلى بدء العملية
+                    await ExecuteJavaScriptAsync("disableUpdateButton(true);");
+                    await ExecuteJavaScriptAsync("updateButtonText('جاري التحقق من التحديثات...');");
+
+                    // تحديد رابط ملف update_manifest.json من أحدث إصدار على GitHub
+                    string latestReleaseTag = "v" + versionNumber; // استخدام الإصدار الحالي كافتراض
+                    string apiUrl = $"https://api.github.com/repos/socri007/stopwindowsupdates/releases/latest";
+                    
+                    using (HttpClient client = new HttpClient())
+                    {
+                        client.DefaultRequestHeaders.UserAgent.TryParseAdd("request"); // إضافة وكيل المستخدم (مهم لـ GitHub API)
+                        HttpResponseMessage response = await client.GetAsync(apiUrl);
+
+                        if (response.IsSuccessStatusCode)
+                        {
+                            string jsonString = await response.Content.ReadAsStringAsync();
+                            dynamic releaseInfo = Newtonsoft.Json.JsonConvert.DeserializeObject(jsonString);
+                            latestReleaseTag = releaseInfo.tag_name;
+                        }
+                        else
+                        {
+                            // معالجة خطأ في جلب معلومات الإصدار الأخير
+                            await DisplayErrorMessageInWebView("فشل في جلب معلومات أحدث إصدار من GitHub.");
+                            return;
+                        }
+                    }
+                    
+                    string manifestUrl = $"https://github.com/socri007/stopwindowsupdates/releases/download/{latestReleaseTag}/update_manifest.json";
+                    
+                    // تنزيل ملف البيان
+                    UpdateInfo latestUpdateInfo = await DownloadUpdateManifest(manifestUrl);
+                    if (latestUpdateInfo == null)
+                    {
+                        await DisplayErrorMessageInWebView("فشل في تنزيل ملف بيان التحديث.");
+                        return;
+                    }
+
+                    // الحصول على قائمة الملفات المحلية
+                    string appFolderPath = Application.StartupPath;
+                    List<string> localFiles = Directory.GetFiles(appFolderPath, "*.*", SearchOption.AllDirectories)
+                                                     .Select(f => f.Substring(appFolderPath.Length + 1)) // الحصول على المسار النسبي
+                                                     .ToList();
+                    
+                    // مقارنة الملفات المحلية مع الملفات الموجودة في البيان
+                    List<UpdateFile> filesToDownload = new List<UpdateFile>();
+                    foreach (var updateFile in latestUpdateInfo.Files)
+                    {
+                        
+                        string localFilePath = Path.Combine(appFolderPath, updateFile.Name);
+                        
+                        if (!File.Exists(localFilePath))
+                        {
+                            filesToDownload.Add(updateFile);
+                            continue;
+                        }
+
+                        // حساب تجزئة الملف المحلي
+                        string localFileHash = CalculateSHA256Hash(localFilePath);
+                        if (localFileHash != updateFile.Hash)
+                        {
+                            filesToDownload.Add(updateFile);
+                        }
+                    }
+
+                    if (filesToDownload.Count > 0)
+                    {
+                        // بدء تنزيل الملفات
+                        await DownloadAndInstallUpdates(latestUpdateInfo, filesToDownload, appFolderPath);
+
+                        // تحديث معلومات الإصدار المحلي (يمكنك حفظها في ملف أو مكان آخر)
+                        // هنا يمكنك تحديث AssemblyFileVersion أو أي طريقة أخرى تستخدمها لتتبع الإصدار
+                        // مثال: يمكنك كتابة الإصدار الجديد في ملف نصي
+                        string versionFilePath = Path.Combine(appFolderPath, "version.txt");
+                        File.WriteAllText(versionFilePath, latestUpdateInfo.LatestVersion);
+
+                        await DisplaySuccessMessageInWebView($"تم تحديث البرنامج إلى الإصدار {latestUpdateInfo.LatestVersion} بنجاح. سيتم إعادة تشغيل البرنامج.");
+
+                        // يمكنك هنا إعادة تشغيل التطبيق الرئيسي
+                        // Process.Start(Path.Combine(appFolderPath, "SAWU.exe"));
+                        // Application.Exit();
+                    }
+                    else
+                    {
+                        await DisplayInfoMessageInWebView("البرنامج هو أحدث إصدار.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    await DisplayErrorMessageInWebView($"حدث خطأ أثناء التحديث: {ex.Message}");
+                    // يمكنك تسجيل الخطأ هنا
+                    Console.WriteLine($"خطأ أثناء التحديث: {ex}");
+                }
+                finally
+                {
+                    // إعادة تمكين الزر وتغيير النص إلى الحالة الأصلية
+                    await ExecuteJavaScriptAsync("updateButtonText('إعادة التشغيل');"); // يمكنك تغيير النص حسب الحاجة
+                    await ExecuteJavaScriptAsync("disableUpdateButton(false);");
+                }
+            }
+        }
+
+        private async Task<UpdateInfo> DownloadUpdateManifest(string url)
+        {
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    client.DefaultRequestHeaders.UserAgent.TryParseAdd("request");
+                    HttpResponseMessage response = await client.GetAsync(url);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string jsonString = await response.Content.ReadAsStringAsync();
+                        return JsonConvert.DeserializeObject<UpdateInfo>(jsonString);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"فشل تنزيل البيان: {response.StatusCode}");
+                        return null;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"حدث خطأ أثناء تنزيل البيان: {ex.Message}");
+                return null;
+            }
+        }
+
+        private async Task DownloadAndInstallUpdates(UpdateInfo latestUpdateInfo, List<UpdateFile> filesToDownload, string appFolderPath)
+        {
+            
+            long totalBytesToDownload = filesToDownload.Sum(f => GetFileSizeFromUrlAsync(f.DownloadUrl).Result);
+            long totalBytesDownloaded = 0;
+
+            await ExecuteJavaScriptAsync($"updateStatus('جاري تنزيل التحديثات ({filesToDownload.Count} ملف)...');");
+            await ExecuteJavaScriptAsync($"updateProgressBarVisibility(true);");
+
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.UserAgent.TryParseAdd("request");
+
+                for (int i = 0; i < filesToDownload.Count; i++)
+                {
+                    var file = filesToDownload[i];
+                    string downloadUrl = file.DownloadUrl;
+                    string destinationPath = Path.Combine(appFolderPath, file.Name);
+                    MessageBox.Show("file: " + file);
+                    try
+                    {
+                        // إنشاء المجلدات إذا لم تكن موجودة
+                        Directory.CreateDirectory(Path.GetDirectoryName(destinationPath));
+
+                        using (var response = await client.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead))
+                        {
+                            response.EnsureSuccessStatusCode();
+
+                            long? fileSize = response.Content.Headers.ContentLength;
+                            long downloadedBytes = 0;
+
+                            using (var streamToReadFrom = await response.Content.ReadAsStreamAsync())
+                            {
+                                using (var streamToWriteTo = File.Open(destinationPath, FileMode.Create))
+                                {
+                                    bytebuffer = new byte[8192];
+                                    int bytesRead;
+                                    while ((bytesRead = await streamToReadFrom.ReadAsync(buffer, 0, buffer.Length)) != 0)
+                                    {
+                                        await streamToWriteTo.WriteAsync(buffer, 0, bytesRead);
+                                        downloadedBytes += bytesRead;
+                                        totalBytesDownloaded += bytesRead;
+
+                                        // حساب النسبة المئوية للتنزيل للملف الحالي
+                                        if (fileSize.HasValue)
+                                        {
+                                            double fileProgress = (double)downloadedBytes / fileSize.Value * 100;
+                                            await ExecuteJavaScriptAsync($"updateFileProgress('{file.Name}', {fileProgress:F2});");
+                                        }
+
+                                        // حساب النسبة المئوية للتنزيل الكلية
+                                        if (totalBytesToDownload > 0)
+                                        {
+                                            double overallProgress = (double)totalBytesDownloaded / totalBytesToDownload * 100;
+                                            await ExecuteJavaScriptAsync($"updateOverallProgress({overallProgress:F2});");
+                                        }
+                                    }
+                                }
+                            }
+
+                            // التحقق من تجزئة الملف الذي تم تنزيله
+                            string downloadedFileHash = CalculateSHA256Hash(destinationPath);
+                            if (downloadedFileHash != file.Hash)
+                            {
+                                await DisplayErrorMessageInWebView($"خطأ: تجزئة الملف {file.Name} غير متطابقة. التحديث غير ناجح.");
+                                // يمكنك هنا حذف الملف الذي تم تنزيله
+                                File.Delete(destinationPath);
+                                return;
+                            }
+
+                            await ExecuteJavaScriptAsync($"updateFileStatus('{file.Name}', 'تم التنزيل والتحقق');");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        await DisplayErrorMessageInWebView($"حدث خطأ أثناء تنزيل الملف {file.Name}: {ex.Message}");
+                        // يمكنك هنا معالجة الخطأ أو إعادة محاولة التنزيل
+                        return;
+                    }
+                }
+            }
+
+            await ExecuteJavaScriptAsync($"updateStatus('اكتمل تنزيل التحديثات. جاري التحضير للتثبيت...');");
+            // يمكنك هنا إضافة خطوات أخرى بعد التنزيل إذا لزم الأمر
+        }
+
+        private async Task<long> GetFileSizeFromUrlAsync(string url)
+        {
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    client.DefaultRequestHeaders.UserAgent.TryParseAdd("request");
+                    using (var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead))
+                    {
+                        response.EnsureSuccessStatusCode();
+                        return response.Content.Headers.ContentLength ?? 0;
+                    }
+                }
+            }
+            catch
+            {
+                return 0; // لا يمكن الحصول على حجم الملف
+            }
+        }
+
+        private async Task DisplayErrorMessageInWebView(string message)
+        {
+            await ExecuteJavaScriptAsync($"showMessage('error', '{message}');");
+        }
+
+        private async Task DisplaySuccessMessageInWebView(string message)
+        {
+            await ExecuteJavaScriptAsync($"showMessage('success', '{message}');");
+        }
+
+        private async Task DisplayInfoMessageInWebView(string message)
+        {
+            await ExecuteJavaScriptAsync($"showMessage('info', '{message}');");
+        }
+
+        private async Task ExecuteJavaScriptAsync(string script)
+        {
+            try
+            {
+                if (webViewBackFirst?.CoreWebView2 != null)
+                {
+                    await webViewBackFirst.CoreWebView2.ExecuteScriptAsync(script);
+                }
+                else
+                {
+                    Console.WriteLine("webViewBackFirst or CoreWebView2 is not initialized.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"JavaScript execution error: {ex.Message}");
+            }
+        }
+
+        private void HandleButtonClick(WebViewMessage message)
+        {
+            switch (message.Target)
+            {
+                case "buttonClose":
+                    // استخدام Invoke لتنفيذ الإغلاق على خيط الواجهة الرسومية الرئيسي
+                    Console.WriteLine("buttonClose11111...");
+                    //MessageBox.Show("thisClose");
+                    BeginInvoke(new Action(thisClose));
+                    //thisClose();
+                    break;
+
+                case "buttonMinimize":
+                    // استخدام Invoke لتنفيذ التصغير على خيط الواجهة الرسومية الرئيسي
+                    Console.WriteLine("buttonMinimize...");
+                    BeginInvoke(new Action(thisMinimized));
+                    break;
+
+                case "canProceed":
+                    string jMessage2 = message.JMessage ?? "Unknown";
+                    Console.WriteLine("canProceed - Value: " + jMessage2);
+                    if (jMessage2 == "yes")
+                    {
+                        this.DialogResult = DialogResult.OK;
+                        this.Close();
+                        this.DialogResult = DialogResult.OK;
+                    }
+                    else if (jMessage2 == "no")
+                    {
+                        //BeginInvoke((Action)(() => ShowMessage(
+                        //            "App Message",
+                        //            "Please read the Tips, Warnings, Risks and agree to the terms before proceeding.", "Warning", "none", "OK", out dialogResult)));
+                        HideCustomToolTip();
+                        //this.Close();
+                        //this.DialogResult = DialogResult.Cancel;
+                    }
+                    // ... (بقية الكود الخاص بفتح الإعدادات) ...
+                    // مثال (يجب التأكد من أن SettingsForm لا تُسبب مشاكل cross-threading أيضًا):
+                    break;
+
+                default:
+                    Console.WriteLine($"Clicked unknown button: {message.Target}");
+                    break;
+            }
+        }
+
+        private void thisMinimized()
+        {
+            //MessageBox.Show("thisMinimized");
+            // التحقق من أن النافذة ليست مصغرة بالفعل
+            if (WindowState != FormWindowState.Minimized)
+            {
+                // إضافة تأخير
+                System.Threading.Thread.Sleep(33);
+
+                // تغيير الحالة إلى مصغرة
+                WindowState = FormWindowState.Minimized;
+            }
+        }
+
+        private void Update_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                if (e.Clicks > 1)
+                {
+                    // do something with double-click
+                }
+                else
+                {
+                    MoveForm.ReleaseCapture();
+                    MoveForm.SendMessage(Handle, MoveForm.WM_NCLBUTTONDOWN, MoveForm.HT_CAPTION, 0);
+                }
+            }
+        }
+
+        private void Update_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            //isClosing = true;
+            buttonFalse.Focus();
+            if (isClosing)
+            {
+                // إذا كان البرنامج يعيد التشغيل، اسمح بالإغلاق بدون تأكيد
+                return;
+            }
+            //MessageBox.Show("Update_FormClosing");
+
+            int ypg = this.Location.Y + 1;
+            int xpg = this.Location.X;
+            int width = this.Size.Width;
+            int height = this.Size.Height - 0;
+            int screenWidth = Screen.PrimaryScreen.WorkingArea.Width;
+            int screenHeight = Screen.PrimaryScreen.WorkingArea.Height;
+            MessageBackground newMDIChild = new MessageBackground();
+            Rectangle screenRectangle = this.RectangleToScreen(this.ClientRectangle);
+
+            newMDIChild.GetType = "NotTimer"; //newMDIChild.GetPage = "NotTimer";
+            newMDIChild.GetOpacity = 0.75;
+            int visualTopHeight = 1;
+            int visualBottomHeight = minBorderSizeTop + minBorderSizeBottom;
+            int titleHeight = screenRectangle.Top - this.Top - visualTopHeight + webViewHeader.Height;
+            newMDIChild.GetY = ypg + titleHeight + minBorderSizeTop;
+            newMDIChild.GetX = xpg + minBorderSizeLeft;
+            newMDIChild.GetWidth = width - (minBorderSizeLeft + minBorderSizeRight);
+            newMDIChild.GetHeight = height - titleHeight - visualBottomHeight - 3;
+            newMDIChild.LoaderTitle = "Verification Message";
+            //MessageBox.Show(height.ToString());
+            //Environment.Exit(0);
+            string[] loaderMessages = {
+                "Do you want to close the update program?\nThe update process will stop\n", "Warning", "YesNo"
+            };
+            newMDIChild.LoaderMessages = loaderMessages;
+            //newMDIChild.MdiParent = this;
+
+            newMDIChild.ShowDialog(this);
+            string result = newMDIChild.SendData();
+
+            //MessageBox.Show(result.ToString());
+            if (result.ToString() == "Yes")
+            {
+                HideAllControls();
+                //loading.Top = 3000;
+                //loading.Visible = false;
+                //loading.Dispose();
+                //workRecords();
+                //MessageBox.Show("workRecords");
+                //Environment.Exit(0);
+            }
+            else
+            {
+                e.Cancel = true;
+            }
+        }
+
+        static string CalculateSHA256Hash(string filePath)
+        {
+            using (SHA256 sha256 = SHA256.Create())
+            {
+                using (FileStream fileStream = System.IO.File.OpenRead(filePath))
+                {
+                    byte[] hashBytes = sha256.ComputeHash(fileStream);
+                    return BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
+                }
+            }
+        }
+
+    }
+
+    public class UpdateService
+    {
+        private readonly HttpClient _httpClient;
+        private string _manifestUrl;
+        private string versionNumber;
+        private string yourAccessToken;
+
+        public UpdateService(string accessToken)
+        {
+            yourAccessToken = accessToken;
+            _httpClient = new HttpClient();
+            // لا تقم باستدعاء الدوال غير المتزامنة هنا مباشرة
+
+            /*
+            Task<string> latestVersionTask = GetLatestGitHubReleaseAsync("socri007", "stopwindowsupdates", yourAccessToken);
+            Debug.WriteLine("WebViewUpdate_NavigationCompleted: بعد استدعاء GetLatestGitHubReleaseAsync، قبل الحصول على النتيجة");
+            versionNumber = await latestVersionTask; // استخدام await هنا
+            string latestReleaseTag = versionNumber; // استخدام الإصدار الحالي كافتراض
+            _httpClient = new HttpClient();
+            //_manifestUrl = "https://raw.githubusercontent.com/.../update_manifest.json";
+            _manifestUrl = $"https://github.com/socri007/stopwindowsupdates/releases/download/{latestReleaseTag}/update_manifest.json";
+            //string manifestUrl = $"https://github.com/socri007/stopwindowsupdates/releases/download/{latestReleaseTag}/update_manifest.json";
+        */
+        }
+
+        // دالة تهيئة غير متزامنة
+        public async Task InitializeAsync()
+        {
+            Task<string> latestVersionTask = GetLatestGitHubReleaseAsync("socri007", "stopwindowsupdates", yourAccessToken);
+            Debug.WriteLine("WebViewUpdate_NavigationCompleted: بعد استدعاء GetLatestGitHubReleaseAsync، قبل الحصول على النتيجة");
+            versionNumber = await latestVersionTask; // استخدام await هنا أصبح ممكنًا
+            string latestReleaseTag = versionNumber; // استخدام الإصدار الحالي كافتراض
+            _manifestUrl = $"https://github.com/socri007/stopwindowsupdates/releases/download/{latestReleaseTag}/update_manifest.json";
+        }
+
+        private async Task<string> GetLatestGitHubReleaseAsync(string owner, string repo, string accessToken = null)
+        {
+            Debug.WriteLine("GetLatestGitHubReleaseAsync: الدالة بدأت");
+            using (var httpClient = new HttpClient())
+            {
+                httpClient.Timeout = TimeSpan.FromSeconds(10); // تعيين مهلة 10 ثواني
+                httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("SAWU-Update", "1.0")); // مطلوب لـ GitHub API
+
+                // إضافة رأس المصادقة إذا تم توفير رمز الوصول
+                if (!string.IsNullOrEmpty(accessToken))
+                {
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("token", accessToken);
+                }
+
+                try
+                {
+                    Debug.WriteLine($"GetLatestGitHubReleaseAsync: محاولة الحصول على https://api.github.com/repos/{owner}/{repo}/releases/latest");
+                    var response = await httpClient.GetAsync($"https://api.github.com/repos/{owner}/{repo}/releases/latest");
+                    Debug.WriteLine($"GetLatestGitHubReleaseAsync: تم استلام الاستجابة، حالة النجاح: {response.IsSuccessStatusCode}");
+                    response.EnsureSuccessStatusCode();
+                    string json = await response.Content.ReadAsStringAsync();
+                    Debug.WriteLine($"GetLatestGitHubReleaseAsync: تم قراءة محتوى الاستجابة JSON: {json}");
+                    JObject release = JObject.Parse(json);
+                    string tagName = release["tag_name"].ToString();
+                    Debug.WriteLine($"GetLatestGitHubReleaseAsync: تم استخراج tag_name: {tagName}");
+                    return tagName;
+                }
+                catch (HttpRequestException ex)
+                {
+                    Debug.WriteLine($"GetLatestGitHubReleaseAsync: خطأ في طلب HTTP: {ex.Message}");
+                    return versionNumber;
+                }
+                catch (TaskCanceledException ex)
+                {
+                    Debug.WriteLine($"GetLatestGitHubReleaseAsync: تم إلغاء المهمة: {ex.Message}");
+                    return versionNumber;
+                }
+                catch (Newtonsoft.Json.JsonReaderException ex)
+                {
+                    Debug.WriteLine($"GetLatestGitHubReleaseAsync: خطأ في تحليل JSON: {ex.Message}");
+                    return versionNumber;
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"GetLatestGitHubReleaseAsync: حدث خطأ غير متوقع: {ex.Message}");
+                    return versionNumber;
+                }
+                finally
+                {
+                    Debug.WriteLine("GetLatestGitHubReleaseAsync: الدالة انتهت");
+                }
+            }
+        }
+
+        public async Task<bool> PerformUpdateAsync(Action<double, string> progressCallback)
+        {
+            
+            try
+            {
+                // تنزيل وتحميل manifest
+                var manifestJson = await _httpClient.GetStringAsync(_manifestUrl);
+                var updateInfo = JsonConvert.DeserializeObject<UpdateInfo>(manifestJson);
+
+                int totalFiles = updateInfo.Files.Count;
+                int processedFiles = 0;
+                
+                foreach (var file in updateInfo.Files)
+                {
+                    // حساب التقدم التراكمي
+                    double baseProgress = (double)processedFiles / totalFiles * 100;
+
+                    // تنزيل الملف مع تتبع التقدم
+                    await DownloadFileAsync(
+                        file.DownloadUrl,
+                        file.Name,
+                        (progress) =>
+                        {
+                            double currentFileProgress = progress * 0.8; // 80% وزن للتنزيل
+                            double totalProgress = baseProgress + currentFileProgress;
+                            progressCallback(totalProgress, file.Name);
+                        }
+                    );
+
+                    // التحقق من التجزئة (20% وزن للتحقق)
+                    progressCallback(baseProgress + 80, "Validating " + file.Name);
+                    if (!ValidateFileHash(file.Name, file.Hash))
+                    {
+                        throw new Exception($"Hash validation failed for {file.Name}");
+                    }
+
+                    processedFiles++;
+                }
+
+                // تحديث الإصدار المحلي
+                //UpdateLocalVersion(updateInfo.LatestVersion);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                // معالجة الأخطاء
+                MessageBox.Show($"Update failed: {ex.Message}");
+                return false;
+            }
+        }
+
+        private async Task DownloadFileAsync(string url, string fileName, Action<double> progress)
+        {
+            try
+            {
+                // إنشاء مجلد SAWU_Temp داخل المجلد المؤقت
+                string tempFolder = Path.Combine(Path.GetTempPath(), "SAWU_Temp");
+                Directory.CreateDirectory(tempFolder); // إنشاء المجلد إذا لم يكن موجودًا
+                //MessageBox.Show($"tempFolder:  {tempFolder}");
+                // إنشاء مسار ملف مؤقت داخل المجلد الجديد
+                string tempFilePath = Path.Combine(tempFolder, Guid.NewGuid().ToString() + ".tmp");
+
+                using (var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead))
+                using (var stream = await response.Content.ReadAsStreamAsync())
+                using (var fileStream = new FileStream(tempFilePath, FileMode.Create))
+                {
+                    var totalBytes = response.Content.Headers.ContentLength ?? 0;
+                    var buffer = new byte[8192];
+                    var totalRead = 0L;
+
+                    int bytesRead;
+                    while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                    {
+                        await fileStream.WriteAsync(buffer, 0, bytesRead);
+                        totalRead += bytesRead;
+
+                        if (totalBytes > 0)
+                        {
+                            var percent = (double)totalRead / totalBytes * 100;
+                            progress(percent);
+                        }
+                    }
+                }
+
+                // إنشاء المجلد الهدف إذا لم يكن موجودًا
+                string targetPath = Path.Combine(Application.StartupPath, fileName);
+                Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
+
+                // نقل الملف إلى الموقع النهائي
+                //File.Copy(tempFilePath, targetPath, true);
+
+                // حذف الملف المؤقت (اختياري)
+                //File.Delete(tempFilePath);
+            }
+            catch (HttpRequestException ex)
+            {
+                MessageBox.Show($"Network error: {ex.Message}\nURL: {url}");
+            }
+            catch (IOException ex)
+            {
+                MessageBox.Show($"File system error: {ex.Message}\nPath: {Path.Combine(Path.GetTempPath(), "SAWU_Temp")}");
+            }
+            catch (UnauthorizedAccessException)
+            {
+                MessageBox.Show("Permission denied. Please run the program as administrator.");
+            }
+        }
+
+        private bool ValidateFileHash(string fileName, string expectedHash)
+        {
+            var filePath = Path.Combine(Application.StartupPath, fileName);
+            var actualHash = CalculateSHA256Hash(filePath);
+            return actualHash.Equals(expectedHash, StringComparison.OrdinalIgnoreCase);
+        }
+
+        // هذه الدالة موجودة في كودك الأصلي
+        static string CalculateSHA256Hash(string filePath)
+        {
+            using (SHA256 sha256 = SHA256.Create())
+            {
+                using (FileStream fileStream = File.OpenRead(filePath))
+                {
+                    byte[] hashBytes = sha256.ComputeHash(fileStream);
+                    return BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
+                }
+            }
+        }
+    }
+
+    // فئات البيانات (يمكن وضعها في ملف منفصل أو إعادة استخدام الفئات من مشروع WinForms)
+    public class UpdateInfo
+    {
+        [JsonProperty("latestVersion")]
+        public string LatestVersion { get; set; }
+
+        [JsonProperty("releaseNotesUrl")]
+        public string ReleaseNotesUrl { get; set; }
+
+        [JsonProperty("releaseDate")]
+        public string ReleaseDate { get; set; }
+
+        [JsonProperty("files")]
+        public List<UpdateFile> Files { get; set; }
+    }
+
+    public class UpdateFile
+    {
+        [JsonProperty("name")]
+        public string Name { get; set; }
+
+        [JsonProperty("version")]
+        public string Version { get; set; }
+
+        [JsonProperty("downloadUrl")]
+        public string DownloadUrl { get; set; }
+
+        [JsonProperty("hash")]
+        public string Hash { get; set; }
+    }
+
+    public class UpdateChecker
+    {
+        private const string GitHubRepoOwner = "socri007"; // استبدل باسم مستخدم GitHub الخاص بك
+        private const string GitHubRepoName = "stopwindowsupdates"; // استبدل باسم مستودع GitHub الخاص بك
+
+        public static async Task<string> GetLatestReleaseChangeLog(string accessToken = null)
+        {
+            try
+            {
+                JObject releaseInfo = await GetLatestReleaseInfo(accessToken);
+                if (releaseInfo != null)
+                {
+                    string changeLog = releaseInfo.Value<string>("body"); // استخراج وصف الإصدار (body)
+                    return changeLog ?? "There is no changelog available for this release."; // إرجاع الوصف أو رسالة افتراضية
+                }
+                else
+                {
+                    return "Failed to fetch version information from server."; // إرجاع رسالة خطأ إذا فشل جلب المعلومات
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                return $"There was an error connecting to server: {ex.Message}"; // إرجاع رسالة خطأ اتصال
+            }
+            catch (Exception ex)
+            {
+                return $"An unexpected error occurred: {ex.Message}"; // إرجاع رسالة خطأ عامة
+            }
+        }
+
+        public static async Task<JObject> GetLatestReleaseInfo(string accessToken = null)
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("MyApp", "1.0")); // إضافة User-Agent ضروري لطلبات GitHub API
+
+                // إضافة رأس المصادقة إذا تم توفير رمز الوصول
+                if (!string.IsNullOrEmpty(accessToken))
+                {
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("token", accessToken);
+                }
+
+                string apiUrl = $"https://api.github.com/repos/{GitHubRepoOwner}/{GitHubRepoName}/releases/latest";
+                HttpResponseMessage response = await client.GetAsync(apiUrl);
+                response.EnsureSuccessStatusCode(); // التأكد من نجاح الطلب
+
+                string jsonString = await response.Content.ReadAsStringAsync();
+                JObject releaseInfo = JObject.Parse(jsonString);
+                return releaseInfo;
+            }
+        }
+    }
+
+    // هذا هو الكلاس الرئيسي الذي يمثل رسالة الراديو بأكملها
+    public class RadioMessage
+    {
+        public string type { get; set; } // نوع الرسالة سيكون "radio.change"
+        public string id { get; set; }   // معرف زر الراديو الذي تم تغييره
+        public RadioMessageDetails jmessage { get; set; } // يحتوي على تفاصيل إضافية حول زر الراديو والمجموعة
+    }
+
+    // هذا الكلاس الداخلي (داخل RadioMessage) ينظم التفاصيل الخاصة بزر الراديو المحدد
+    public class RadioMessageDetails
+    {
+        public string group { get; set; } // اسم مجموعة أزرار الراديو
+        public string id { get; set; }    // معرف زر الراديو المحدد
+        public string value { get; set; }  // قيمة زر الراديو (إذا كانت ذات صلة)
+        public bool @checked { get; set; } // حالة التحديد (عادةً true لأن حدث 'change' يحدث عند التحديد)
+    }
+
+    // هذا الكلاس يمثل خصائص كل زر نريد إضافته
+    public class CustomMainMenuStrip
+    {
+        public int MenuId { get; set; } // رقم الزر (معرف فريد)
+        public string MenuText { get; set; } // نص الزر
+        public string MenuIcon { get; set; } // مسار أيقونة الزر (اختياري)
+        public Action MenuAction { get; set; } // الإجراء الذي يتم تنفيذه عند الضغط على الزر
+        public List<CustomMainMenuStrip> SubMenuItems { get; set; } // إضافة هذه الخاصية - قائمة فرعية
+        public bool IsSubMenuItem { get; set; } // خاصية جديدة
+
+        public CustomMainMenuStrip()
+        {
+            //SubMenuItems = new List<CustomMainMenuStrip>(); // تهيئة القائمة الفرعية
+        }
+    }
+
+    public class PageStatus
+    {
+        /// <summary>
+        /// اسم الملف الفعلي للصفحة (مثال: "index.html").
+        /// يُستخدم هذا الاسم لتحميل الملف من القرص.
+        /// </summary>
+        public string PageName { get; set; }
+
+        /// <summary>
+        /// اسم عنصر WebView2 المرتبط بهذه الصفحة.
+        /// يُستخدم هذا الاسم للوصول إلى عنصر WebView2 في الكود.
+        /// مثال: "webViewPage1" يشير إلى عنصر WebView2 باسم webViewPage1 في الفورم.
+        /// </summary>
+        public string WebViewName { get; set; }
+
+        /// <summary>
+        /// اسم بديل أو "وهمي" للصفحة ليتم عرضه للمستخدم.
+        /// يُستخدم هذا الاسم في شاشة البداية (splash screen) بدلاً من اسم الملف الفعلي.
+        /// مثال: إذا كان PageName هو "index.html"، يمكن أن يكون FakeName هو "الصفحة الرئيسية".
+        /// </summary>
+        public string FakeName { get; set; }
+
+        /// <summary>
+        /// يشير إلى ما إذا تم تحميل الصفحة بنجاح أم لا.
+        /// يتم تعيين هذه القيمة إلى true عند اكتمال تحميل الصفحة بنجاح في WebView2.
+        /// </summary>
+        public bool IsLoaded { get; set; }
+    }
+
+    // تعريف بسيط لكائن Rect
+    public class Rect
+    {
+        public double left { get; set; }
+        public double top { get; set; }
+        public double width { get; set; }
+        public double height { get; set; }
+    }
+
+    // كلاس C# مُخصّص لتمثيل رسائل بيانات النموذج والتحقق من الصحة
+    public class FormDataMessage
+    {
+        public string type { get; set; } // نوع الرسالة (formData أو validationError) - Message type (formData or validationError)
+        public string target { get; set; } // الهدف من الرسالة (عادةً اسم النموذج أو العنصر) - Message target (usually form name or element)
+        //public System.Text.Json.JsonElement? jmessage { get; set; } // JMessage يمكن أن يحتوي على بيانات النموذج أو أخطاء التحقق - JMessage can contain form data or validation errors
+    }
+
+    // تعريف فئة مطابقة للكائن المرسل من JavaScript لبيانات النموذج
+    public class FormData
+    {
+        public string feedbackType { get; set; } // النوع - Type
+        public string subject { get; set; } // الموضوع - Subject
+        public string name { get; set; } // الاسم - Name
+        public string email { get; set; } // البريد الإلكتروني - Email
+        public string message { get; set; } // الرسالة - Message
+    }
+
+    // إضافة كلاس جديد لعناصر select
+    public class SelectMessage
+    {
+        public string type { get; set; }
+        public string id { get; set; }
+        public string value { get; set; }
+    }
+
+    // كائن C# مُخصّص لتمثيل رسائل WebView
+    public class WebViewMessage
+    {
+        public string Status { get; set; }
+        public string Type { get; set; } // نوع الرسالة
+        public string Target { get; set; } // الهدف من الرسالة (معرّف العنصر)
+        public string JMessage { get; set; } // رسالة اختيارية مرافقة
+    }
+
+    // تعريف فئة مطابقة للكائن المرسل من JavaScript
+    public class ThemeMessage
+    {
+        public string type { get; set; } // نوع الرسالة
+        public bool value { get; set; } // القيمة المرتبطة بالرسالة
+        public string color { get; set; } // اللون الحالي
+    }
+
+    public class CheckboxMessage
+    {
+        public string type { get; set; }
+        public string id { get; set; }
+        public bool @checked { get; set; }
+    }
+
+    // تعريف فئة لتمثيل بيانات الحدث (اختياري)
+    public class ClickEvent
+    {
+        public string Type { get; set; }
+        public int X { get; set; }
+        public int Y { get; set; }
+    }
+
+    public class MouseMessage
+    {
+        public string type { get; set; }
+        public string @event { get; set; } // استخدام @ لأن event كلمة محجوزة في C#
+        public string target { get; set; }
+    }
+
+    public class ButtonMessage // تعريف الكلاس الجديد (إذا لم يكن موجودًا)
+    {
+        public string type { get; set; }
+        public string id { get; set; }
+        public string message { get; set; }
+    }
+
+    // كلاس لتمثيل الإعدادات
+    class Settings
+    {
+        public int MaxRowsStatusLog { get; set; }
+        public bool StartProgramOnStartup { get; set; }
+        public bool PlayCongratsGifWhenUpdateRunningStoped { get; set; }
+        public int CheckUpdateRunningEverySeconds { get; set; }
+        public bool StartWhenOpen { get; set; }
+        public bool AutoStopUpdate { get; set; }
+        public bool AutoDisableUpdate { get; set; }
+        public bool ShowFlashOnDetect { get; set; }
+        public bool EnableAlertSounds { get; set; }
+        public string Title { get; set; }
+        public string animatedScanPic { get; set; }
+        public string appTheme { get; set; }
+        public string scanStatusDivStyle { get; set; }
+    }
+
+    // تعريف فئة مطابقة للكائن المرسل من JavaScript
+    public class LoadingResult
+    {
+        public string status { get; set; }
+        public string message { get; set; }
+        public int filesProcessed { get; set; }
+        public float elapsedTime { get; set; }
+    }
+}
